@@ -107,7 +107,6 @@ func (w *web3) GetBalanceAt(address string, number interface{}) (*big.Int, error
 	}
 	balance := string(data)
 	balance = balance[3 : len(balance)-1]
-	slog.Info("test", "1", string(data), "2", balance)
 
 	r := big.NewInt(0)
 	r, _ = r.SetString(balance, 16)

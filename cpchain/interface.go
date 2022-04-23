@@ -1,5 +1,10 @@
 package cpchain
 
+import (
+	"cpchain-golang-sdk/internal/fusion"
+	"math/big"
+)
+
 type Network struct {
 	Name       string
 	JsonRpcUrl string
@@ -8,10 +13,8 @@ type Network struct {
 
 type CPChain interface {
 	// Get the current block number
-	GetBlockNumber() (uint64, error)
-	// GetBlock(number interface{}) (interface{}, error) // number is a digit or 'latest'
-	// GetBlockByNumber(number interface{}, fullTx bool) (interface{}, error)
-	// // number: "latest"/or number
+	BlockNumber() (uint64, error)
+	Block(number int) (*fusion.FullBlock, error)
 	// GetBalanceAt(address string, number interface{}) (*big.Int, error)
-	// GetBalance(address string) *big.Int
+	BalanceOf(address string) *big.Int
 }

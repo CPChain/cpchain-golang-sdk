@@ -3,6 +3,7 @@ package cpchain
 import (
 	"cpchain-golang-sdk/internal/fusion"
 	"fmt"
+	"math/big"
 )
 
 type cpchain struct {
@@ -27,7 +28,7 @@ func NewCPChain(network Network) (CPChain, error) {
 	}, nil
 }
 
-func (c *cpchain) GetBlockNumber() (uint64, error) {
+func (c *cpchain) BlockNumber() (uint64, error) {
 	block, err := c.web3.GetBlock("latest")
 	if err != nil {
 		return 0, fmt.Errorf("get block number failed: %v", err)
@@ -35,9 +36,25 @@ func (c *cpchain) GetBlockNumber() (uint64, error) {
 	return block.(*fusion.FullBlock).Number, nil
 }
 
-// func (c *cpchain) GetBlock(number interface{}) (interface{}, error) {
+func (c *cpchain) Block(number int) (*fusion.FullBlock, error) {
+	block, err := c.web3.GetBlock(uint64(number))
+	if err != nil {
+		return nil, fmt.Errorf("get block failed: %v", err)
+	}
+	return block.(*fusion.FullBlock), nil
+}
 
-// }
+func (c *cpchain) BalanceOf(address string) *big.Int {
+	balance, err := c.web3.GetBalanceAt(address, "latest")
+	if err != nil {
+		return big.NewInt(0)
+	}
+	return balance
+}
+
+func WeiToCpc(wei *big.Int) *big.Int {
+	return wei.Div(wei, big.NewInt(1e18))
+}
 
 // func (c *cpchain) GetBlockByNumber(number interface{}, fullTx bool) (interface{}, error) {
 
