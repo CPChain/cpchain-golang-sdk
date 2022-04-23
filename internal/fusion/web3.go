@@ -93,7 +93,7 @@ func (w *web3) GetBlock(number interface{}) (interface{}, error) {
 }
 
 func (w *web3) GetBlockByNumber(number interface{}, fullTx bool) (interface{}, error) {
-	return nil, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (w *web3) GetBalanceAt(address string, number interface{}) (*big.Int, error) {
