@@ -2,8 +2,12 @@ package cpchain
 
 import (
 	"cpchain-golang-sdk/internal/fusion"
+	"cpchain-golang-sdk/internal/fusion/common"
+	"cpchain-golang-sdk/internal/fusion/contract"
 	"fmt"
 	"math/big"
+
+	"github.com/zgljl2012/slog"
 )
 
 type cpchain struct {
@@ -56,14 +60,37 @@ func WeiToCpc(wei *big.Int) *big.Int {
 	return wei.Div(wei, big.NewInt(1e18))
 }
 
-// func (c *cpchain) GetBlockByNumber(number interface{}, fullTx bool) (interface{}, error) {
+func (c *cpchain) Contract(abi []byte, address string) Contract {
+	contractIns, err := contract.NewContractWithProvider(
+		[]byte(abi),
+		common.HexToAddress(address),
+		c.provider,
+	)
+	if err != nil {
+		slog.Fatal(err)
+	}
+	return &contractInternal{
+		contractIns: contractIns,
+	}
+}
 
-// }
+type contractInternal struct {
+	contractIns contract.Contract
+}
 
-// func (c *cpchain) GetBalanceAt(address string, number interface{}) (*big.Int, error) {
-
-// }
-
-// func (c *cpchain) GetBalance(address string) *big.Int {
-
-// }
+func (c *contractInternal) Events(eventName string, event interface{}, options ...WithEventsOptionsOption) ([]*contract.Event, error) {
+	var opts = EventsOptions{}
+	for _, op := range options {
+		op(&opts)
+	}
+	events, err := c.contractIns.FilterLogs(
+		eventName,
+		event,
+		contract.WithFilterLogsFromBlock(opts.FromBlock),
+		contract.WithFilterLogsEndBlock(opts.ToBlock),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return events, nil
+}
