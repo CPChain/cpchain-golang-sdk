@@ -7,6 +7,8 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 )
 
+type Event = contract.Event
+
 type Network struct {
 	Name       string
 	JsonRpcUrl string
