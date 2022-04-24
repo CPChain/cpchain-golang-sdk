@@ -20,8 +20,8 @@ import (
 	"math/big"
 	"reflect"
 
-	"cpchain-golang-sdk/internal/fusion/common"
-	"cpchain-golang-sdk/internal/fusion/common/math"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common/math"
 )
 
 // packBytesSlice packs the given bytes as [L, V] as the canonical representation

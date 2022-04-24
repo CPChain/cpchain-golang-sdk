@@ -5,9 +5,9 @@ import (
 	"math/big"
 	"reflect"
 
-	"cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 
-	"cpchain-golang-sdk/internal/fusion/crypto"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto"
 )
 
 // makeTopics converts a filter query argument list into a filter topic set.

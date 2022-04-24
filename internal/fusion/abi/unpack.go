@@ -22,7 +22,7 @@ import (
 	"math/big"
 	"reflect"
 
-	"cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 )
 
 // reads the integer based on its kind

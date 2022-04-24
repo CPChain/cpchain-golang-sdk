@@ -1,4 +1,4 @@
-module cpchain-golang-sdk
+module github.com/CPChain/cpchain-golang-sdk
 
 go 1.14
 

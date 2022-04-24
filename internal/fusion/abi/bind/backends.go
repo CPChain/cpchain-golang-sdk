@@ -3,7 +3,7 @@ package bind
 import (
 	"context"
 
-	"cpchain-golang-sdk/internal/fusion/types"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 )
 
 // ContractFilterer defines the methods needed to access log events using one-off

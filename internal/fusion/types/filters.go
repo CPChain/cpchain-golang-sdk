@@ -3,7 +3,7 @@ package types
 import (
 	"math/big"
 
-	"cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 )
 
 // FilterQuery contains options for contract log filtering.

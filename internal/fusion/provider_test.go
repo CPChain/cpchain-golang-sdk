@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"cpchain-golang-sdk/internal/fusion"
-	"cpchain-golang-sdk/internal/fusion/hexutil"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/hexutil"
 )
 
 func TestProvider(t *testing.T) {

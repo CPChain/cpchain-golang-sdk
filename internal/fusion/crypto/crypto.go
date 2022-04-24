@@ -1,8 +1,8 @@
 package crypto
 
 import (
-	"cpchain-golang-sdk/internal/fusion/common"
-	"cpchain-golang-sdk/internal/fusion/crypto/sha3"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/sha3"
 )
 
 // Keccak256 calculates and returns the Keccak256 hash of the input data.

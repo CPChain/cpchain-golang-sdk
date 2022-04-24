@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"reflect"
 
-	"cpchain-golang-sdk/internal/fusion/hexutil"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/hexutil"
 
 	"github.com/zgljl2012/slog"
 )

@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"cpchain-golang-sdk/internal/fusion/crypto"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto"
 )
 
 // Method represents a callable given a `Name` and whether the method is a constant.

@@ -1,11 +1,12 @@
 package cpchain_test
 
 import (
-	"cpchain-golang-sdk/cpchain"
-	"cpchain-golang-sdk/internal/fusion/common"
 	"io/ioutil"
 	"math/big"
 	"testing"
+
+	"github.com/CPChain/cpchain-golang-sdk/cpchain"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 )
 
 func TestGetBlockNumber(t *testing.T) {

@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"strings"
 
-	"cpchain-golang-sdk/internal/fusion/common"
-	"cpchain-golang-sdk/internal/fusion/crypto"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto"
 )
 
 // Event is an event potentially triggered by the EVM's LOG mechanism. The Event

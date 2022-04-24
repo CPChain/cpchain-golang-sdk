@@ -1,11 +1,12 @@
 package cpchain
 
 import (
-	"cpchain-golang-sdk/internal/fusion"
-	"cpchain-golang-sdk/internal/fusion/common"
-	"cpchain-golang-sdk/internal/fusion/contract"
 	"fmt"
 	"math/big"
+
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 
 	"github.com/zgljl2012/slog"
 )

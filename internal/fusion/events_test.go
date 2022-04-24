@@ -5,9 +5,9 @@ import (
 	"math/big"
 	"testing"
 
-	"cpchain-golang-sdk/internal/fusion"
-	"cpchain-golang-sdk/internal/fusion/common"
-	"cpchain-golang-sdk/internal/fusion/contract"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 )
 
 type CreateProductEvent struct {

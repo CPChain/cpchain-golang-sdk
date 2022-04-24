@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	"cpchain-golang-sdk/internal/fusion"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
 )
 
 func TestWeb3(t *testing.T) {

@@ -1,9 +1,10 @@
 package cpchain
 
 import (
-	"cpchain-golang-sdk/internal/fusion"
-	"cpchain-golang-sdk/internal/fusion/contract"
 	"math/big"
+
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 )
 
 type Network struct {

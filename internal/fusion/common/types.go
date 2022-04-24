@@ -7,9 +7,9 @@ import (
 	"math/rand"
 	"reflect"
 
-	"cpchain-golang-sdk/internal/fusion/hexutil"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/hexutil"
 
-	"cpchain-golang-sdk/internal/fusion/crypto/sha3"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/sha3"
 )
 
 // Lengths of hashes and addresses in bytes.

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"cpchain-golang-sdk/internal/fusion"
-	"cpchain-golang-sdk/internal/fusion/abi/bind"
-	"cpchain-golang-sdk/internal/fusion/common"
-	"cpchain-golang-sdk/internal/fusion/hexutil"
-	"cpchain-golang-sdk/internal/fusion/types"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/hexutil"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 )
 
 type clientBackend struct {

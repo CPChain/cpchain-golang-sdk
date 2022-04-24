@@ -7,12 +7,12 @@ import (
 	"math/big"
 	"reflect"
 
-	"cpchain-golang-sdk/internal/fusion"
-	"cpchain-golang-sdk/internal/fusion/abi"
-	"cpchain-golang-sdk/internal/fusion/abi/bind"
-	"cpchain-golang-sdk/internal/fusion/abi/bind/backends"
-	"cpchain-golang-sdk/internal/fusion/common"
-	"cpchain-golang-sdk/internal/fusion/types"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind/backends"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 
 	"github.com/zgljl2012/slog"
 )
