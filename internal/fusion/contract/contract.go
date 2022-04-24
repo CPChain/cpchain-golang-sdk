@@ -38,6 +38,7 @@ func WithFilterLogsEndBlock(block uint64) WithFilterLogsOption {
 
 type Event struct {
 	types.Log
+	Name string
 	Data interface{}
 }
 
@@ -60,7 +61,7 @@ func NewContractWithProvider(abi []byte, address common.Address, provider fusion
 func NewContract(abiData []byte, address common.Address, backend bind.ContractBackend) (Contract, error) {
 	instance, err := abi.JSON(bytes.NewReader(abiData))
 	if err != nil {
-		return nil, fmt.Errorf("New contract failed: %v", err)
+		return nil, fmt.Errorf("new contract failed: %v", err)
 	}
 	return &contract{
 		abi:     instance,
@@ -78,7 +79,7 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 
 	topics, err := bind.MakeTopics(query...)
 	if err != nil {
-		return nil, fmt.Errorf("Filter logs failed: %v", err)
+		return nil, fmt.Errorf("filter logs failed: %v", err)
 	}
 	filterQuery := types.FilterQuery{
 		Addresses: []common.Address{c.address},
@@ -87,7 +88,7 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 	}
 	logs, err := c.backend.FilterLogs(context.Background(), filterQuery)
 	if err != nil {
-		return nil, fmt.Errorf("Filter logs failed: %v", err)
+		return nil, fmt.Errorf("filter logs failed: %v", err)
 	}
 	var events []*Event
 	vt := reflect.TypeOf(event)
@@ -97,6 +98,7 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 			slog.Error(err)
 		}
 		events = append(events, &Event{
+			Name: eventName,
 			Log:  l,
 			Data: v.Interface(),
 		})

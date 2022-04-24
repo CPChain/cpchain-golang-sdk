@@ -74,5 +74,9 @@ func TestEvents(t *testing.T) {
 	for _, e := range events {
 		args := e.Data.(*CreateProductEvent)
 		t.Log(e.BlockNumber, args.Id, args.Name, args.Price, args.Extend, args.File_hash, args.File_uri)
+		// check event name
+		if e.Name != "CreateProduct" {
+			t.Fatal("event name is error")
+		}
 	}
 }
