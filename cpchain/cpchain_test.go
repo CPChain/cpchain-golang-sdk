@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 )
 
 func TestGetBlockNumber(t *testing.T) {
@@ -44,14 +43,13 @@ func TestGetBalance(t *testing.T) {
 
 // 测试合约的事件
 type CreateProductEvent struct {
-	Id        *big.Int       `json:"ID"`
-	Name      string         `json:"name"`
-	Extend    string         `json:"extend"`
-	Price     *big.Int       `json:"price"`
-	Creator   common.Address `json:"creator"`
-	File_uri  string         `json:"file_uri" rlp:"file_uri"`
-	File_hash string         `json:"file_hash"`
-	// Raw      types.Log      // Blockchain specific contextual infos
+	Id        cpchain.UInt256 `json:"ID"`
+	Name      cpchain.String  `json:"name"`
+	Extend    cpchain.String  `json:"extend"`
+	Price     cpchain.UInt256 `json:"price"`
+	Creator   cpchain.Address `json:"creator"`
+	File_uri  cpchain.String  `json:"file_uri" rlp:"file_uri"`
+	File_hash cpchain.String  `json:"file_hash"`
 }
 
 func TestEvents(t *testing.T) {
@@ -73,7 +71,7 @@ func TestEvents(t *testing.T) {
 	t.Log("Count:", len(events))
 	for _, e := range events {
 		args := e.Data.(*CreateProductEvent)
-		t.Log(e.BlockNumber, args.Id, args.Name, args.Price, args.Extend, args.File_hash, args.File_uri)
+		t.Log(e.BlockNumber, args.Id, args.Name, args.Price, args.Extend, args.File_hash, args.File_uri, args.Creator.Hex())
 		// check event name
 		if e.Name != "CreateProduct" {
 			t.Fatal("event name is error")

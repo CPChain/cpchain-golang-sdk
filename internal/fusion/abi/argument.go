@@ -33,6 +33,15 @@ type Argument struct {
 
 type Arguments []Argument
 
+func (args Arguments) ForEach(cb func(i int, arg Argument) error) error {
+	for i, arg := range args {
+		if err := cb(i, arg); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // UnmarshalJSON implements json.Unmarshaler interface
 func (argument *Argument) UnmarshalJSON(data []byte) error {
 	var extarg struct {

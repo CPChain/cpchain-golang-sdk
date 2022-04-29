@@ -97,6 +97,21 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 		if err := c.abi.Unpack(v.Interface(), eventName, l.Data); err != nil {
 			slog.Error(err)
 		}
+		// 处理 Indexed 字段
+		if len(l.Topics) > 1 {
+			if err := c.abi.Events[eventName].Inputs.ForEach(func(i int, input abi.Argument) error {
+				if input.Indexed {
+					val := l.Topics[i+1]
+					// TODO support other types
+					if input.Type.String() == "address" {
+						v.Elem().Field(i).Set(reflect.ValueOf(common.HexToAddress(val.Hex())))
+					}
+				}
+				return nil
+			}); err != nil {
+				slog.Error("Handle indexed fields failed", "err", err)
+			}
+		}
 		events = append(events, &Event{
 			Name: eventName,
 			Log:  l,
