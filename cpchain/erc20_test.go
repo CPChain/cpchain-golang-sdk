@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
-	"github.com/CPChain/cpchain-golang-sdk/modules/token"
+	"github.com/CPChain/cpchain-golang-sdk/cpchain/modules/token"
 )
 
 // 在测试链上部署一个 ERC20 合约，进行事件测试
