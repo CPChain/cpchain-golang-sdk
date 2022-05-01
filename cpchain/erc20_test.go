@@ -6,6 +6,7 @@ import (
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
 	"github.com/CPChain/cpchain-golang-sdk/cpchain/modules/token"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 )
 
 // 在测试链上部署一个 ERC20 合约，进行事件测试
@@ -41,6 +42,25 @@ func TestMetaToken(t *testing.T) {
 		t.Logf("TransferEvent: %+v", transferEvent)
 		t.Logf("Blocknumber: %d, From: %v To: %v, Value: %d",
 			event.BlockNumber, transferEvent.From.Hex(), transferEvent.To.Hex(), big.NewInt(0).Div(transferEvent.Value, big.NewInt(1e18)))
+	}
+}
+
+func TestMetaTokenWithMap(t *testing.T) {
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contract := token.NewERC20Contract(client, ContractAddress)
+	events, err := contract.Events(token.TRANSFER_EVENT_NAME, map[string]interface{}{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, event := range events {
+		transferEvent := event.Data.(map[string]interface{})
+		t.Logf("TransferEvent: %+v", transferEvent)
+		val := transferEvent["value"].(big.Int)
+		t.Logf("Blocknumber: %d, From: %v To: %v, Value: %d",
+			event.BlockNumber, transferEvent["from"].(common.Address).Hex(), transferEvent["to"].(common.Address).Hex(), big.NewInt(0).Div(&val, big.NewInt(1e18)))
 	}
 
 }

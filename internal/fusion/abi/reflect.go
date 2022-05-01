@@ -106,6 +106,7 @@ func requireUnpackKind(v reflect.Value, t reflect.Type, k reflect.Kind,
 			return fmt.Errorf("abi: insufficient number of elements in the list/array for unpack, want %d, got %d",
 				minLen, v.Len())
 		}
+	case reflect.Map:
 	default:
 		return fmt.Errorf("abi: cannot unmarshal tuple into %v", t)
 	}

@@ -154,6 +154,8 @@ func (arguments Arguments) unpackTuple(v interface{}, marshalledValues []interfa
 			if err := set(v.Elem(), reflectValue, arg); err != nil {
 				return err
 			}
+		case reflect.Map:
+			value.SetMapIndex(reflect.ValueOf(arg.Name), reflectValue)
 		default:
 			return fmt.Errorf("abi:[2] cannot unmarshal tuple in to %v", typ)
 		}

@@ -92,10 +92,25 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 	}
 	var events []*Event
 	vt := reflect.TypeOf(event)
+	eventIsMap := vt.Kind() == reflect.Map
 	for _, l := range logs {
-		v := reflect.New(vt)
-		if err := c.abi.Unpack(v.Interface(), eventName, l.Data); err != nil {
-			slog.Error(err)
+		var v reflect.Value
+		if vt.Kind() != reflect.Map {
+			v = reflect.New(vt)
+			if err := c.abi.Unpack(v.Interface(), eventName, l.Data); err != nil {
+				slog.Error(err)
+			}
+		} else {
+			v = reflect.MakeMap(vt)
+			tmp := map[string]interface{}{}
+			if err := c.abi.Unpack(&tmp, eventName, l.Data); err != nil {
+				slog.Error(err)
+			}
+			for k_, v_ := range tmp {
+				vv := reflect.ValueOf(v_)
+				vv = reflect.Indirect(vv)
+				v.SetMapIndex(reflect.ValueOf(k_), vv)
+			}
 		}
 		// 处理 Indexed 字段
 		if len(l.Topics) > 1 {
@@ -104,7 +119,11 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 					val := l.Topics[i+1]
 					// TODO support other types
 					if input.Type.String() == "address" {
-						v.Elem().Field(i).Set(reflect.ValueOf(common.HexToAddress(val.Hex())))
+						if !eventIsMap {
+							v.Elem().Field(i).Set(reflect.ValueOf(common.HexToAddress(val.Hex())))
+						} else {
+							v.SetMapIndex(reflect.ValueOf(input.Name), reflect.ValueOf(common.HexToAddress(val.Hex())))
+						}
 					}
 				}
 				return nil
