@@ -124,6 +124,12 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 						} else {
 							v.SetMapIndex(reflect.ValueOf(input.Name), reflect.ValueOf(common.HexToAddress(val.Hex())))
 						}
+					} else if input.Type.String() == "uint64" {
+						if !eventIsMap {
+							v.Elem().Field(i).Set(reflect.ValueOf(new(big.Int).SetUint64(val.Big().Uint64())))
+						} else {
+							v.SetMapIndex(reflect.ValueOf(input.Name), reflect.ValueOf(new(big.Int).SetUint64(val.Big().Uint64())))
+						}
 					}
 				}
 				return nil

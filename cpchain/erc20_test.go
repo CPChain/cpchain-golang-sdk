@@ -62,5 +62,28 @@ func TestMetaTokenWithMap(t *testing.T) {
 		t.Logf("Blocknumber: %d, From: %v To: %v, Value: %d",
 			event.BlockNumber, transferEvent["from"].(common.Address).Hex(), transferEvent["to"].(common.Address).Hex(), big.NewInt(0).Div(&val, big.NewInt(1e18)))
 	}
+}
 
+func TestHandGame(t *testing.T) {
+	// Handgame 中包含一个 uint64 的 indexed field，所以测试一下
+	var (
+		abi             = `[{"anonymous":false,"inputs":[{"indexed":true,"name":"gameId","type":"uint64"},{"indexed":false,"name":"starter","type":"address"},{"indexed":false,"name":"card","type":"uint256"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"threshold","type":"uint256"}],"name":"GameStarted","type":"event"}]`
+		contractAddress = "0x8A4A54CEF3Fa45b0dB8748291d3F59c3a85C9b28"
+	)
+
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contract := client.Contract([]byte(abi), contractAddress)
+	events, err := contract.Events("GameStarted", map[string]interface{}{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(len(events))
+	for _, e := range events {
+		gameStarted := e.Data.(map[string]interface{})
+		t.Log(gameStarted["gameId"])
+		t.Logf("GameStarted: %+v", gameStarted)
+	}
 }

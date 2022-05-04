@@ -35,6 +35,7 @@ func WithEventsOptionsToBlock(block uint64) WithEventsOptionsOption {
 }
 
 type Contract interface {
+	// TODO 如果事件非常多，如10000条事件，是否会分批获取？
 	Events(eventName string, event interface{}, options ...WithEventsOptionsOption) ([]*contract.Event, error)
 }
 
@@ -46,3 +47,5 @@ type CPChain interface {
 	BalanceOf(address string) *big.Int
 	Contract(abi []byte, address string) Contract
 }
+
+// TODO simulate chain
