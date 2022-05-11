@@ -67,23 +67,22 @@ func TestMetaTokenWithMap(t *testing.T) {
 func TestHandGame(t *testing.T) {
 	// Handgame 中包含一个 uint64 的 indexed field，所以测试一下
 	var (
-		abi             = `[{"anonymous":false,"inputs":[{"indexed":true,"name":"gameId","type":"uint64"},{"indexed":false,"name":"starter","type":"address"},{"indexed":false,"name":"card","type":"uint256"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"threshold","type":"uint256"}],"name":"GameStarted","type":"event"}]`
-		contractAddress = "0x8A4A54CEF3Fa45b0dB8748291d3F59c3a85C9b28"
+		abi             = `[{"anonymous":false,"inputs":[{"indexed":false,"name":"limit","type":"uint256"}],"name":"SetMaxLimit","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"limit","type":"uint256"}],"name":"SetTimeoutLimit","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"gameId","type":"uint64"},{"indexed":false,"name":"starter","type":"address"},{"indexed":false,"name":"card","type":"uint256"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"threshold","type":"uint256"}],"name":"GameStarted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"group_id","type":"uint256"},{"indexed":true,"name":"gameId","type":"uint64"},{"indexed":false,"name":"starter","type":"address"},{"indexed":false,"name":"message","type":"string"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"threshold","type":"uint256"}],"name":"CreateGroupHandGame","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"gameId","type":"uint64"}],"name":"GameCancelled","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"gameId","type":"uint64"},{"indexed":false,"name":"player","type":"address"},{"indexed":false,"name":"card","type":"uint256"},{"indexed":false,"name":"amount","type":"uint256"}],"name":"GameLocked","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"gameId","type":"uint64"},{"indexed":false,"name":"player","type":"address"},{"indexed":false,"name":"key","type":"uint256"},{"indexed":false,"name":"content","type":"uint256"}],"name":"CardOpened","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"gameId","type":"uint64"},{"indexed":false,"name":"result","type":"int8"}],"name":"GameFinished","type":"event"},{"constant":false,"inputs":[{"name":"limit","type":"uint256"}],"name":"setMaxLimit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"limit","type":"uint256"}],"name":"setTimeoutLimit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]`
+		contractAddress = "0xd9Fff84402f066157b723310fa755B2209346910"
 	)
 
-	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	client, err := cpchain.NewCPChain(cpchain.Mainnet)
 	if err != nil {
 		t.Fatal(err)
 	}
 	contract := client.Contract([]byte(abi), contractAddress)
-	events, err := contract.Events("GameStarted", map[string]interface{}{})
+	events, err := contract.Events("CardOpened", map[string]interface{}{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(len(events))
 	for _, e := range events {
-		gameStarted := e.Data.(map[string]interface{})
-		t.Log(gameStarted["gameId"])
-		t.Logf("GameStarted: %+v", gameStarted)
+		cardOpened := e.Data.(map[string]interface{})
+		t.Log(cardOpened)
 	}
 }
