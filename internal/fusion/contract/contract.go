@@ -13,8 +13,6 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind/backends"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
-
-	"github.com/zgljl2012/slog"
 )
 
 type FilterLogsOptions struct {
@@ -98,13 +96,13 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 		if vt.Kind() != reflect.Map {
 			v = reflect.New(vt)
 			if err := c.abi.Unpack(v.Interface(), eventName, l.Data); err != nil {
-				slog.Error(err)
+				return nil, fmt.Errorf("unpack event failed (not map): %v", err)
 			}
 		} else {
 			v = reflect.MakeMap(vt)
 			tmp := map[string]interface{}{}
 			if err := c.abi.Unpack(&tmp, eventName, l.Data); err != nil {
-				slog.Error(err)
+				return nil, fmt.Errorf("unpack event failed (map): %v", err)
 			}
 			for k_, v_ := range tmp {
 				vv := reflect.ValueOf(v_)
@@ -134,7 +132,7 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 				}
 				return nil
 			}); err != nil {
-				slog.Error("Handle indexed fields failed", "err", err)
+				return nil, fmt.Errorf("handle indexed fields failed: %v", err)
 			}
 		}
 		events = append(events, &Event{
