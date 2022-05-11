@@ -101,13 +101,17 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 		} else {
 			v = reflect.MakeMap(vt)
 			tmp := map[string]interface{}{}
-			if err := c.abi.Unpack(&tmp, eventName, l.Data); err != nil {
-				return nil, fmt.Errorf("unpack event failed (map): %v", err)
-			}
-			for k_, v_ := range tmp {
-				vv := reflect.ValueOf(v_)
-				vv = reflect.Indirect(vv)
-				v.SetMapIndex(reflect.ValueOf(k_), vv)
+			if err := c.abi.Unpack(&tmp, eventName, l.Data); err == nil {
+				for k_, v_ := range tmp {
+					vv := reflect.ValueOf(v_)
+					vv = reflect.Indirect(vv)
+					v.SetMapIndex(reflect.ValueOf(k_), vv)
+				}
+			} else {
+				// 允许当事件中无任何索引字段时，返回空 map
+				if err.Error() != "abi: unmarshalling empty output" {
+					return nil, fmt.Errorf("unpack event failed (map): %v", err)
+				}
 			}
 		}
 		// 处理 Indexed 字段
