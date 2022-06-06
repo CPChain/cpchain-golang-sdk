@@ -75,6 +75,14 @@ func (c *cpchain) Contract(abi []byte, address string) Contract {
 	}
 }
 
+// func (c *cpchain) Transfer() {
+
+// }
+
+// func (c *cpchain) Decrypt(password string, keystorepath string) {
+
+// }
+
 type contractInternal struct {
 	contractIns contract.Contract
 }
