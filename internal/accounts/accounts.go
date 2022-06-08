@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
+
 type Account struct {
 	Address common.Address `json:"address"` // cpchain account address derived from the key
 	URL     URL            `json:"url"`     // Optional resource locator within a backend
