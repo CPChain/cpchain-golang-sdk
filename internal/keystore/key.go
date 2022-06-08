@@ -7,6 +7,10 @@ import (
 	"github.com/pborman/uuid"
 )
 
+const (
+	version = 3
+)
+
 type Key struct {
 	Id uuid.UUID // Version 4 "random" for unique id not derived from key data
 	// to simplify lookups we also store the address
@@ -23,7 +27,13 @@ type keyStore interface {
 	// Loads and decrypts the key from disk.
 	GetKey(addr common.Address, filename string, auth string) (*Key, error)
 	// Writes and encrypts the key.
-	StoreKey(filename string, k *Key, auth string) error
+
+
+	// StoreKey(filename string, k *Key, auth string) error
+
+
 	// Joins filename with the key directory unless it is already absolute.
-	JoinPath(filename string) string
+
+
+	// JoinPath(filename string) string
 }
