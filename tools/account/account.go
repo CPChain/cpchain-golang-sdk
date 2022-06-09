@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/CPChain/cpchain-golang-sdk/cpchain"
+	// "github.com/CPChain/cpchain-golang-sdk/cpchain"
 	"github.com/urfave/cli"
 )
 
@@ -22,14 +22,6 @@ func main() {
 			return nil
 		},
 	}
-	// app.Flags = []cli.Flag{
-	// 	cli.StringFlag{
-	// 		Name:  "password, p",
-	// 		Value: "passowrd",
-	// 		Usage: "password to create account",
-	// 		// Destination: &password,
-	// 	},
-	// }
 	app.Commands = []cli.Command{
 		{
 			Name:     "new",
@@ -42,10 +34,11 @@ func main() {
 				fmt.Println("please input your password again")
 				fmt.Scanln(&passwordagian)
 				if passwordagian == passwordfirst {
-					err := cpchain.CreateKeystore(password)
-					if err != nil {
-						fmt.Printf("%c[0;40;31m%s%c[0m", 0x1b, "ERROR: create new keystore failed", 0x1b)
-					}
+					// err := cpchain.CreateKeystore(password)
+					// err := nil
+					// if err != nil {
+					// 	fmt.Printf("%c[0;40;31m%s%c[0m", 0x1b, "ERROR: create new keystore failed", 0x1b)
+					// }
 				} else {
 					fmt.Printf("%c[0;40;31m%s%c[0m", 0x1b, "ERROR: the password did not match the re-typed password", 0x1b)
 				}
