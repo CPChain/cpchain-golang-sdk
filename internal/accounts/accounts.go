@@ -4,8 +4,8 @@ import (
 	"math/big"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/event"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
-	"github.com/ethereum/go-ethereum/event"
 )
 
 
