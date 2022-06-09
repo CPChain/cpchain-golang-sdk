@@ -3,8 +3,8 @@ package keystore
 import (
 	"crypto/ecdsa"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
-	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/pborman/uuid"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/ecies"
 )
 
 const (

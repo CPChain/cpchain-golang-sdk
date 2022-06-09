@@ -11,10 +11,10 @@ import (
 	"crypto/ecdsa"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/ecieskey"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/event"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 	"github.com/CPChain/cpchain-golang-sdk/internal/accounts"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/event"
 )
 
 const KeyStoreScheme = "keystore"

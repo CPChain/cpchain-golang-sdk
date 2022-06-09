@@ -10,9 +10,9 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/pborman/uuid"
-	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/ecies"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/scrypt"
 )
