@@ -1,16 +1,21 @@
 package cpchain
 
 import (
-	"math/big"
-	"strings"
+	"bufio"
 	"crypto/ecdsa"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"math/big"
+	"os"
+	"strings"
 
-	"github.com/pborman/uuid"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/ecies"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
+	"github.com/pborman/uuid"
 )
 
 type Event = contract.Event
@@ -73,7 +78,7 @@ func (u URL) Cmp(url URL) int {
 	return strings.Compare(u.Scheme, url.Scheme)
 }
 
-type Wallet interface{
+type Wallet interface {
 	URL() URL
 
 	Account() []Account
@@ -81,10 +86,46 @@ type Wallet interface{
 	SignTxWithPassphrase(account Account, passphrase string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
 }
 
-
 type KeyStore struct {
-	storage  keyStore                     // Storage backend, might be cleartext or encrypted
+	storage keyStore // Storage backend, might be cleartext or encrypted
 	// cache    *accountCache                // In-memory account cache over the filesystem storage
+	account *Account
+}
+
+var (
+	buf  = new(bufio.Reader)
+	keys struct {
+		Address string `json:"address"`
+	}
+)
+
+const KeyStoreScheme = "keystore"
+
+func ReadAccount(path string) *Account {
+	fd, err := os.Open(path)
+	if err != nil {
+		// log.Debug("Failed to open keystore file", "path", path, "err", err)
+		return nil
+	}
+	defer fd.Close()
+	buf.Reset(fd)
+	// Parse the address.
+	keys.Address = ""
+	err = json.NewDecoder(buf).Decode(&keys)
+	addr := common.HexToAddress(keys.Address)
+	switch {
+	case err != nil:
+		// log.Debug("Failed to decode keystore key", "path", path, "err", err)
+	case (addr == common.Address{}):
+		// log.Debug("Failed to decode keystore key", "path", path, "err", "missing or zero address")
+	default:
+		return &Account{Address: addr, URL: URL{Scheme: KeyStoreScheme, Path: path}}
+	}
+	return nil
+}
+
+func (ks *KeyStore) Accounts() *Account {
+	return ks.account
 }
 
 type keyStore interface {
@@ -103,3 +144,25 @@ type Key struct {
 	EciesPrivateKey *ecies.PrivateKey
 }
 
+type keyStorePassphrase struct {
+	keysDirPath string
+	scryptN     int
+	scryptP     int
+}
+
+func (ks keyStorePassphrase) GetKey(addr common.Address, filename, auth string) (*Key, error) {
+	// Load the key from the keystore and decrypt its contents
+	keyjson, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	key, err := DecryptKey(keyjson, auth)
+	if err != nil {
+		return nil, err
+	}
+	// Make sure we're really operating on the requested key (no swap attacks)
+	if key.Address != addr {
+		return nil, fmt.Errorf("key content mismatch: have account %x, want %x", key.Address, addr)
+	}
+	return key, nil
+}
