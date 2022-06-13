@@ -9,7 +9,7 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/hexutil"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common/hexutil"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 )
 

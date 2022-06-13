@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/hexutil"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common/hexutil"
 )
 
 const (

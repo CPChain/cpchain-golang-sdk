@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"reflect"
 
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/hexutil"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common/hexutil"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/sha3"
 )
