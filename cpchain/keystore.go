@@ -4,8 +4,10 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	// "math/big"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto"
@@ -18,24 +20,71 @@ func NewKeyStore(keydir string, scryptN, scryptP int) *KeyStore {
 	return ks
 }
 
+
+// var (
+// 	endPoint = "http://localhost:8501"
+// )
+
+
+func resolveDomain(hostname string) (string, error) {
+	ipAddress := net.ParseIP(hostname)
+	// log.Debug("parse ip", "hostname", hostname, "ipAddress", ipAddress)
+	if ipAddress != nil {
+		return ipAddress.String(), nil
+	}
+	addr, err := net.LookupHost(hostname)
+	if err != nil {
+		// log.Error("lookup host error", "hostname", hostname, "err", err)
+		return "", err
+	}
+	if len(addr) > 0 {
+		return addr[0], nil
+	}
+	return "", fmt.Errorf("invalid host: %v", err)
+}
+
+func ResolveUrl(url string) (string, error) {
+	host, port, err := net.SplitHostPort(url[7:])
+	ip, err := resolveDomain(host)
+	if err != nil {
+		// log.Fatal("unknown endpoint", "endpoint", url, "err", err)
+		return "", err
+	}
+	return "http://" + ip + ":" + port, err
+}
+
+func Connect(endPoint string, keyStoreFilePath string, password string) (*Client, error, *ecdsa.PrivateKey, *ecdsa.PublicKey, common.Address, *KeyStore, Account) {
+	// ep, err := ResolveUrl(endPoint)
+	// fmt.Println(ep)
+	// if err != nil {
+
+	// }
+	// Create client.
+	client, err := Dial(endPoint)
+	if err != nil {
+		// log.Fatal(err.Error())
+	}
+
+	privateKey, publicKeyECDSA, fromAddress, kst, account, err := DecryptKeystore(keyStoreFilePath, password)
+	if err != nil {
+		// log.Fatal(err.Error())
+	}
+	return client, err, privateKey, publicKeyECDSA, fromAddress, kst, account
+}
+
+
+
+
 func DecryptKeystore(keyStoreFilePath string, password string) (*ecdsa.PrivateKey, *ecdsa.PublicKey, common.Address, *KeyStore, Account, error) {
 	// Open keystore file.
-	file, err := os.Open(keyStoreFilePath)
-	if err != nil {
-		return nil, nil, [20]byte{}, nil, Account{}, err
-	}
-	keyPath, err := filepath.Abs(filepath.Dir(file.Name()))
+	_, err := os.Open(keyStoreFilePath)
 	if err != nil {
 		return nil, nil, [20]byte{}, nil, Account{}, err
 	}
 	// Create keystore and get account.
-	kst := NewKeyStore(keyPath, 2, 1)
+	kst := NewKeyStore(keyStoreFilePath, 2, 1)
 	acct := kst.Accounts()
-	fmt.Println("-----")
-	fmt.Println(acct)
-	fmt.Println("-----")
 	key, err := kst.storage.GetKey(acct.Address, acct.URL.Path, password)
-	fmt.Println("-----")
 	if err != nil {
 		return nil, nil, [20]byte{}, nil, Account{}, err
 	}
