@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"io"
 	"math/big"
 	"sync/atomic"
 
@@ -102,4 +103,19 @@ func newTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit 
 	}
 
 	return &Transaction{data: d}
+}
+
+func (tx *Transaction) EncodeRLP(w io.Writer) error {
+	return rlp.Encode(w, &tx.data)
+}
+
+// DecodeRLP implements rlp.Decoder
+func (tx *Transaction) DecodeRLP(s *rlp.Stream) error {
+	_, size, _ := s.Kind()
+	err := s.Decode(&tx.data)
+	if err == nil {
+		tx.size.Store(common.StorageSize(rlp.ListSize(size)))
+	}
+
+	return err
 }

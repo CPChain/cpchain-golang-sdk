@@ -195,10 +195,12 @@ var (
 func makeDecoder(typ reflect.Type, tags tags) (dec decoder, err error) {
 	kind := typ.Kind()
 	fmt.Println("----12", kind)
+	fmt.Println("decoderinterface", decoderInterface)
 	switch {
 	case typ == rawValueType:
 		return decodeRawValue, nil
 	case typ.Implements(decoderInterface):
+		fmt.Println("b----")
 		return decodeDecoder, nil
 	case kind != reflect.Ptr && reflect.PtrTo(typ).Implements(decoderInterface):
 		return decodeDecoderNoPtr, nil
@@ -217,6 +219,7 @@ func makeDecoder(typ reflect.Type, tags tags) (dec decoder, err error) {
 	case kind == reflect.Struct:
 		return makeStructDecoder(typ)
 	case kind == reflect.Ptr:
+		fmt.Println("c-----")
 		if tags.nilOK {
 			return makeOptionalPtrDecoder(typ)
 		}
@@ -456,6 +459,7 @@ func makeStructDecoder(typ reflect.Type) (decoder, error) {
 // the pointer's element type.
 func makePtrDecoder(typ reflect.Type) (decoder, error) {
 	etype := typ.Elem()
+	fmt.Print("!!!!", etype)
 	etypeinfo, err := cachedTypeInfo1(etype, tags{})
 	if err != nil {
 		return nil, err
