@@ -1,13 +1,13 @@
 package types
 
 import (
+	"errors"
 	"math/big"
 	"sync/atomic"
-	"errors"
 
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/rlp"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/sha3"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/sha3"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/rlp"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 )
 
 var (
-    big8 = big.NewInt(8)
+	big8              = big.NewInt(8)
 	ErrInvalidChainId = errors.New("invalid chain id for signer")
 	ErrInvalidSig     = errors.New("invalid transaction v, r, s values")
 )
@@ -65,7 +65,6 @@ func isProtectedV(V *big.Int) bool {
 func (tx *Transaction) ChainId() *big.Int {
 	return deriveChainId(tx.data.V)
 }
-
 
 // block.go
 func rlpHash(x interface{}) (h common.Hash) {

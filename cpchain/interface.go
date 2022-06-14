@@ -2,6 +2,7 @@ package cpchain
 
 import (
 	"bufio"
+	"context"
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
@@ -9,16 +10,15 @@ import (
 	"math/big"
 	"os"
 	"strings"
-	"context"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common/hexutil"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/ecies"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/rpc"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common/hexutil"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/rlp"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/rpc"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 	"github.com/pborman/uuid"
 )
 
@@ -171,7 +171,6 @@ func (ks keyStorePassphrase) GetKey(addr common.Address, filename, auth string) 
 	return key, nil
 }
 
-
 // Client defines typed wrappers for the Ethereum RPC API.
 type Client struct {
 	c *rpc.Client
@@ -198,7 +197,6 @@ func NewClient(c *rpc.Client) *Client {
 func (c *Client) Close() {
 	c.c.Close()
 }
-
 
 // PendingNonceAt returns the account nonce of the given account in the pending state.
 // This is the nonce that should be used for the next transaction.
@@ -236,11 +234,12 @@ func (c *Client) EstimateGas(ctx context.Context, msg CallMsg) (uint64, error) {
 // If the transaction was a contract creation use the TransactionReceipt method to get the
 // contract address after the transaction has been mined.
 func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) error {
+	fmt.Println("-----1", tx)
 	data, err := rlp.EncodeToBytes(tx)
+	fmt.Println("-----2", common.ToHex(data))
 	if err != nil {
 		return fmt.Errorf("encode to bytes error: %v", err)
 	}
-	fmt.Println("--->>>", common.ToHex(data))
 	return c.c.CallContext(ctx, nil, "eth_sendRawTransaction", common.ToHex(data))
 }
 

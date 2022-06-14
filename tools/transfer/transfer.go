@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"context"
 	"path/filepath"
 
 	// "io/ioutil"
 	"math/big"
+
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
@@ -15,33 +16,42 @@ import (
 	"github.com/zgljl2012/slog"
 )
 
-var (
-	password string
-    passwordagian string
-)
+// var (
+// 	password string
+//     passwordagian string
+// )
 
 const (
-	Cpc      = 1e18
+	Cpc = 1e18
 )
+
 func main() {
 	app := &cli.App{
 		Name:  "account",
 		Usage: "transfer",
 		Action: func(c *cli.Context) error {
-			value := c.Int64("value")
-			endpoint := c.String("endpoint")
-			keystorePath := c.String("keystore")
-			targetAddr := c.String("to")
-			chainId := c.Uint64("chainId")
-	
-			if !c.IsSet("value") ||
-				!c.IsSet("endpoint") ||
-				!c.IsSet("to") ||
-				!c.IsSet("keystore") ||
-				!c.IsSet("chainId") {
-					fmt.Println("Need more parameter ! Check parameters with ./transfer -h please.")
-				return cli.NewExitError("Need more parameter ! Check parameters with ./transfer -h please. ", 1)
-			}
+
+			value := int64(1)
+			endpoint := "https://civilian.testnet.cpchain.io"
+			keystorePath := "e:/chengtcode/cpchain-golang-sdk/keystore/UTC--2022-06-09T05-48-04.258507200Z--52c5323efb54b8a426e84e4b383b41dcb9f7e977"
+			targetAddr := "0x4f5625efef254760301d2766c6cc98f05722963e"
+			chainId := uint64(41)
+			password := "test123456!"
+
+			// value := c.Int64("value")
+			// endpoint := c.String("endpoint")
+			// keystorePath := c.String("keystore")
+			// targetAddr := c.String("to")
+			// chainId := c.Uint64("chainId")
+
+			// if !c.IsSet("value") ||
+			// 	!c.IsSet("endpoint") ||
+			// 	!c.IsSet("to") ||
+			// 	!c.IsSet("keystore") ||
+			// 	!c.IsSet("chainId") {
+			// 		fmt.Println("Need more parameter ! Check parameters with ./transfer -h please.")
+			// 	return cli.NewExitError("Need more parameter ! Check parameters with ./transfer -h please. ", 1)
+			// }
 			// fpath, er := filepath.Abs("./keystore/UTC--2022-06-09T05-48-04.258507200Z--52c5323efb54b8a426e84e4b383b41dcb9f7e977")
 			fpath, er := filepath.Abs(keystorePath)
 			if er != nil {
@@ -52,7 +62,7 @@ func main() {
 			// fmt.Println("please input your password again")
 			// fmt.Scanln(&passwordagian)
 			// if passwordagian == password {
-				
+
 			// } else {
 			// 	return cli.NewExitError("ERROR: the password did not match the re-typed password", 1)
 			// }
@@ -100,34 +110,34 @@ func main() {
 		},
 	}
 
-	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "endpoint, ep",
-			Usage: "Endpoint to interact with",
-			Value: "http://localhost:8501",
-		},
+	// app.Flags = []cli.Flag{
+	// 	cli.StringFlag{
+	// 		Name:  "endpoint, ep",
+	// 		Usage: "Endpoint to interact with",
+	// 		Value: "http://localhost:8501",
+	// 	},
 
-		cli.StringFlag{
-			Name:  "keystore, ks",
-			Usage: "Keystore dir path for from address,only 1 keystore file under the dir,path must explicit end with '/'",
-			Value: "./keystore/UTC--2022-06-09T05-48-04.258507200Z--52c5323efb54b8a426e84e4b383b41dcb9f7e977",
-		},
+	// 	cli.StringFlag{
+	// 		Name:  "keystore, ks",
+	// 		Usage: "Keystore dir path for from address,only 1 keystore file under the dir,path must explicit end with '/'",
+	// 		Value: "./keystore/UTC--2022-06-09T05-48-04.258507200Z--52c5323efb54b8a426e84e4b383b41dcb9f7e977",
+	// 	},
 
-		cli.StringFlag{
-			Name:  "to",
-			Usage: "Recipient address",
-		},
+	// 	cli.StringFlag{
+	// 		Name:  "to",
+	// 		Usage: "Recipient address",
+	// 	},
 
-		cli.IntFlag{
-			Name:  "value",
-			Usage: "Value in cpc",
-		},
+	// 	cli.IntFlag{
+	// 		Name:  "value",
+	// 		Usage: "Value in cpc",
+	// 	},
 
-		cli.IntFlag{
-			Name:  "chainId",
-			Usage: "chainId",
-		},
-	}
+	// 	cli.IntFlag{
+	// 		Name:  "chainId",
+	// 		Usage: "chainId",
+	// 	},
+	// }
 
 	app.Run(os.Args)
 }
