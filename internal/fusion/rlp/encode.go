@@ -95,14 +95,12 @@ func Encode(w io.Writer, val interface{}) error {
 // EncodeToBytes returns the RLP encoding of val.
 // Please see the documentation of Encode for the encoding rules.
 func EncodeToBytes(val interface{}) ([]byte, error) {
-	fmt.Println("---3", val)
 	eb := encbufPool.Get().(*encbuf)
 	defer encbufPool.Put(eb)
 	eb.reset()
 	if err := eb.encode(val); err != nil {
 		return nil, err
 	}
-	fmt.Println("---6", eb)
 	return eb.toBytes(), nil
 }
 
@@ -181,14 +179,11 @@ func (w *encbuf) Write(b []byte) (int, error) {
 }
 
 func (w *encbuf) encode(val interface{}) error {
-	fmt.Println("----4", val)
 	rval := reflect.ValueOf(val)
-	fmt.Println("----5", rval, rval.Type(), rval.Type().Kind())
 	ti, err := cachedTypeInfo(rval.Type(), tags{})
 	if err != nil {
 		return err
 	}
-	fmt.Println("----7", reflect.TypeOf(ti.writer))
 	return ti.writer(rval, w)
 }
 
@@ -349,7 +344,6 @@ var (
 // makeWriter creates a writer function for the given type.
 func makeWriter(typ reflect.Type, ts tags) (writer, error) {
 	kind := typ.Kind()
-	fmt.Println("----9", kind)
 	switch {
 	case typ == rawValueType:
 		return writeRawValue, nil

@@ -234,9 +234,7 @@ func (c *Client) EstimateGas(ctx context.Context, msg CallMsg) (uint64, error) {
 // If the transaction was a contract creation use the TransactionReceipt method to get the
 // contract address after the transaction has been mined.
 func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) error {
-	fmt.Println("-----1", tx)
 	data, err := rlp.EncodeToBytes(tx)
-	fmt.Println("-----2", common.ToHex(data))
 	if err != nil {
 		return fmt.Errorf("encode to bytes error: %v", err)
 	}

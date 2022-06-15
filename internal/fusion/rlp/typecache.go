@@ -66,12 +66,10 @@ func cachedTypeInfo(typ reflect.Type, tags tags) (*typeinfo, error) {
 	// not in the cache, need to generate info for this type.
 	typeCacheMutex.Lock()
 	defer typeCacheMutex.Unlock()
-	fmt.Println("----8", typ, tags, typ.Kind())
 	return cachedTypeInfo1(typ, tags)
 }
 
 func cachedTypeInfo1(typ reflect.Type, tags tags) (*typeinfo, error) {
-	fmt.Println("----11", typ.Kind())
 	key := typekey{typ, tags}
 	info := typeCache[key]
 	if info != nil {
@@ -144,7 +142,6 @@ func parseStructTag(typ reflect.Type, fi int) (tags, error) {
 
 func genTypeInfo(typ reflect.Type, tags tags) (info *typeinfo, err error) {
 	info = new(typeinfo)
-	fmt.Println("----10", typ.Kind())
 	if info.decoder, err = makeDecoder(typ, tags); err != nil {
 		return nil, err
 	}
