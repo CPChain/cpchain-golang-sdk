@@ -61,6 +61,7 @@ type CPChain interface {
 	// get balance
 	BalanceOf(address string) *big.Int
 	Contract(abi []byte, address string) Contract
+	//
 }
 
 // TODO simulate chain

@@ -33,7 +33,7 @@ func main() {
 
 			value := int64(1)
 			endpoint := "https://civilian.testnet.cpchain.io"
-			keystorePath := "e:/chengtcode/cpchain-golang-sdk/keystore/UTC--2022-06-09T05-48-04.258507200Z--52c5323efb54b8a426e84e4b383b41dcb9f7e977"
+			keystorePath := "e:/chengtcode/cpchain-golang-sdk/fixtures/keystore/UTC--2022-06-09T05-48-04.258507200Z--52c5323efb54b8a426e84e4b383b41dcb9f7e977"
 			targetAddr := "0x4f5625efef254760301d2766c6cc98f05722963e"
 			chainId := uint64(41)
 			password := "test123456!"
