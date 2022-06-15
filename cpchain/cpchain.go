@@ -79,6 +79,10 @@ func (c *cpchain) LoadWallet(path string) Wallet {
 	return ReadAccount(path)
 }
 
+func (c *cpchain) CreateWallet(path string, password string) Wallet {
+	return nil
+}
+
 type contractInternal struct {
 	contractIns contract.Contract
 }

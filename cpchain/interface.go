@@ -51,8 +51,10 @@ type CPChain interface {
 	// get balance
 	BalanceOf(address string) *big.Int
 	Contract(abi []byte, address string) Contract
-	//create a wallet by keystore path
+	//load a wallet by keystore path
 	LoadWallet(path string) Wallet
+	//create a wallet by dirpath and password
+	CreateWallet(path string, password string) Wallet //返回值或需更改
 }
 
 // TODO simulate chain
