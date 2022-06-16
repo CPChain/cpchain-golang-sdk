@@ -3,6 +3,7 @@ package cpchain_test
 import (
 	"io/ioutil"
 	"math/big"
+	"os"
 	"testing"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
@@ -77,4 +78,26 @@ func TestEvents(t *testing.T) {
 			t.Fatal("event name is error")
 		}
 	}
+}
+
+func TestCreateWallet(t *testing.T) {
+	password := "123456"
+	client, err := cpchain.NewCPChain(cpchain.Mainnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path, err := ioutil.TempDir("e:/chengtcode/cpchain-golang-sdk/fixtures", "keystore")
+	a, err := client.CreateWallet(path, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := client.LoadWallet(a.URL.Path)
+	key, err := w.GetKey(password)
+	if key.Address != a.Address {
+		t.Fatal("account error")
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.RemoveAll(path)
 }

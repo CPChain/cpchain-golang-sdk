@@ -9,8 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common/math"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/ecies"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/randentropy"
 	"github.com/pborman/uuid"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/scrypt"
@@ -20,7 +22,27 @@ const (
 	version = 3
 )
 
-const keyHeaderKDF = "scrypt"
+const (
+	keyHeaderKDF = "scrypt"
+	// StandardScryptN is the N parameter of Scrypt encryption algorithm, using 256MB
+	// memory and taking approximately 1s CPU time on a modern processor.
+	StandardScryptN = 1 << 18
+
+	// StandardScryptP is the P parameter of Scrypt encryption algorithm, using 256MB
+	// memory and taking approximately 1s CPU time on a modern processor.
+	StandardScryptP = 1
+
+	// LightScryptN is the N parameter of Scrypt encryption algorithm, using 4MB
+	// memory and taking approximately 100ms CPU time on a modern processor.
+	LightScryptN = 1 << 12
+
+	// LightScryptP is the P parameter of Scrypt encryption algorithm, using 4MB
+	// memory and taking approximately 100ms CPU time on a modern processor.
+	LightScryptP = 6
+
+	scryptR     = 8
+	scryptDKLen = 32
+)
 
 type encryptedKeyJSONV3 struct {
 	Address string     `json:"address"`
@@ -47,6 +69,55 @@ type cryptoJSON struct {
 
 type cipherparamsJSON struct {
 	IV string `json:"iv"`
+}
+
+func EncryptKey(key *Key, auth string, scryptN, scryptP int) ([]byte, error) {
+	authArray := []byte(auth)
+	salt := randentropy.GetEntropyCSPRNG(32)
+	derivedKey, err := scrypt.Key(authArray, salt, scryptN, scryptR, scryptP, scryptDKLen)
+	if err != nil {
+		return nil, err
+	}
+	// iv, cipherText, err := getCipherText(derivedKey[:16], key)
+
+	keyBytes := math.PaddedBigBytes(key.PrivateKey.D, 32)
+	iv := randentropy.GetEntropyCSPRNG(aes.BlockSize)
+	// 16
+	cipherText, err := aesCTRXOR(derivedKey[:16], keyBytes, iv)
+
+	if err != nil {
+		return nil, err
+	}
+
+	macSource := cipherText
+	mac := crypto.Keccak256(derivedKey[16:32], macSource)
+
+	scryptParamsJSON := make(map[string]interface{}, 5)
+	scryptParamsJSON["n"] = scryptN
+	scryptParamsJSON["r"] = scryptR
+	scryptParamsJSON["p"] = scryptP
+	scryptParamsJSON["dklen"] = scryptDKLen
+	scryptParamsJSON["salt"] = hex.EncodeToString(salt)
+
+	cipherParamsJSON := cipherparamsJSON{
+		IV: hex.EncodeToString(iv),
+	}
+
+	cryptoStruct := cryptoJSON{
+		Cipher:       "aes-128-ctr",
+		CipherText:   hex.EncodeToString(cipherText),
+		CipherParams: cipherParamsJSON,
+		KDF:          keyHeaderKDF,
+		KDFParams:    scryptParamsJSON,
+		MAC:          hex.EncodeToString(mac),
+	}
+	encryptedKeyJSONV3 := encryptedKeyJSONV3{
+		hex.EncodeToString(key.Address[:]),
+		cryptoStruct,
+		key.Id.String(),
+		version,
+	}
+	return json.Marshal(encryptedKeyJSONV3)
 }
 
 func DecryptKey(keyjson []byte, auth string) (*Key, error) {

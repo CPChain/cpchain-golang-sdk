@@ -1,8 +1,10 @@
 package cpchain
 
 import (
+	"crypto/rand"
 	"fmt"
 	"math/big"
+	"path/filepath"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
@@ -79,8 +81,24 @@ func (c *cpchain) LoadWallet(path string) Wallet {
 	return ReadAccount(path)
 }
 
-func (c *cpchain) CreateWallet(path string, password string) Wallet {
-	return nil
+func (c *cpchain) CreateWallet(path string, password string) (*Account, error) {
+	key, err := newKey(rand.Reader)
+	if err != nil {
+		return nil, err
+	}
+	acct := Account{Address: key.Address, URL: URL{Scheme: KeyStoreScheme, Path: filepath.Join(path, keyFileName(key.Address))}} //TODO path 是否是绝对路径的问题
+	if err = StoreKey(key, acct, password); err != nil {
+		return nil, err
+	}
+	return &acct, nil
+}
+
+func StoreKey(key *Key, acct Account, password string) error {
+	keyjson, err := EncryptKey(key, password, 2, 1)
+	if err != nil {
+		return err
+	}
+	return writeKeyFile(acct.URL.Path, keyjson)
 }
 
 type contractInternal struct {
