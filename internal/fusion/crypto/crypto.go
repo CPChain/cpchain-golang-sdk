@@ -3,11 +3,13 @@ package crypto
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"math/big"
-	"fmt"
 	"errors"
+	"fmt"
+	"math/big"
+
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/sha3"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/rlp"
 )
 
 var (
@@ -75,7 +77,6 @@ func ToECDSAUnsafe(d []byte) *ecdsa.PrivateKey {
 	return priv
 }
 
-
 // toECDSA creates a private key with the given D value. The strict parameter
 // controls whether the key's length should be enforced at the curve size or
 // it can also accept legacy encodings (0 prefixes).
@@ -101,4 +102,10 @@ func toECDSA(d []byte, strict bool) (*ecdsa.PrivateKey, error) {
 		return nil, errors.New("invalid private key")
 	}
 	return priv, nil
+}
+
+// CreateAddress creates an ethereum address given the bytes and the nonce
+func CreateAddress(b common.Address, nonce uint64) common.Address {
+	data, _ := rlp.EncodeToBytes([]interface{}{b, nonce})
+	return common.BytesToAddress(Keccak256(data)[12:])
 }

@@ -93,7 +93,11 @@ func (c *cpchain) CreateWallet(path string, password string) (*Account, error) {
 	return &acct, nil
 }
 
-func StoreKey(key *Key, acct Account, password string) error {
+func (c *cpchain) DeployContract() (common.Address, error) {
+	return common.Address{}, nil
+}
+
+func StoreKey(key *Key, acct Account, password string) error { //TODO 是否应该写入接口内
 	keyjson, err := EncryptKey(key, password, 2, 1)
 	if err != nil {
 		return err

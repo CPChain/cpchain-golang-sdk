@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/sha3"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/rlp"
 )
 
@@ -17,7 +16,6 @@ const (
 )
 
 var (
-	big8              = big.NewInt(8)
 	ErrInvalidChainId = errors.New("invalid chain id for signer")
 	ErrInvalidSig     = errors.New("invalid transaction v, r, s values")
 )
@@ -67,16 +65,12 @@ func (tx *Transaction) ChainId() *big.Int {
 	return deriveChainId(tx.data.V)
 }
 
-// block.go
-func rlpHash(x interface{}) (h common.Hash) {
-	hw := sha3.NewKeccak256()
-	rlp.Encode(hw, x)
-	hw.Sum(h[:0])
-	return h
-}
-
 func NewTransaction(nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *Transaction {
 	return newTransaction(nonce, &to, amount, gasLimit, gasPrice, data, BasicTx)
+}
+
+func NewContractCreation(nonce uint64, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) *Transaction {
+	return newTransaction(nonce, nil, amount, gasLimit, gasPrice, data, BasicTx)
 }
 
 func newTransaction(nonce uint64, to *common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte, txtype uint64) *Transaction {
@@ -118,4 +112,72 @@ func (tx *Transaction) DecodeRLP(s *rlp.Stream) error {
 	}
 
 	return err
+}
+
+func (tx *Transaction) Data() []byte       { return common.CopyBytes(tx.data.Payload) }
+func (tx *Transaction) Gas() uint64        { return tx.data.GasLimit }
+func (tx *Transaction) GasPrice() *big.Int { return new(big.Int).Set(tx.data.Price) }
+func (tx *Transaction) Value() *big.Int    { return new(big.Int).Set(tx.data.Amount) }
+func (tx *Transaction) Nonce() uint64      { return tx.data.AccountNonce }
+func (tx *Transaction) CheckNonce() bool   { return true }
+
+// To returns the recipient address of the transaction.
+// It returns nil if the transaction is a contract creation.
+func (tx *Transaction) To() *common.Address {
+	if tx.data.Recipient == nil {
+		return nil
+	}
+	to := *tx.data.Recipient
+	return &to
+}
+
+// Hash hashes the RLP encoding of tx.
+// It uniquely identifies the transaction.
+func (tx *Transaction) Hash() common.Hash {
+	if hash := tx.hash.Load(); hash != nil {
+		return hash.(common.Hash)
+	}
+	v := rlpHash(tx)
+	tx.hash.Store(v)
+	return v
+}
+
+// Cost returns amount + gasprice * gaslimit.
+func (tx *Transaction) Cost() *big.Int {
+	total := new(big.Int).Mul(tx.data.Price, new(big.Int).SetUint64(tx.data.GasLimit))
+	total.Add(total, tx.data.Amount)
+	return total
+}
+
+func (tx *Transaction) RawSignatureValues() (*big.Int, *big.Int, *big.Int) {
+	return tx.data.V, tx.data.R, tx.data.S
+}
+
+func (tx *Transaction) Type() uint64 {
+	return tx.data.Type
+}
+
+// CheckType checks the transaction's type.
+func (tx *Transaction) CheckType(t uint64) bool {
+	return tx.data.Type == t
+}
+
+// SetType sets the type to the transaction.
+func (tx *Transaction) SetType(t uint64) {
+	tx.data.Type = t
+}
+
+// IsPrivate checks if the tx is private.
+func (tx *Transaction) IsPrivate() bool {
+	return tx.CheckType(PrivateTx)
+}
+
+// IsBasic checks if the tx is a basic tx.
+func (tx *Transaction) IsBasic() bool {
+	return tx.CheckType(BasicTx)
+}
+
+// SetPrivate sets the tx as private.
+func (tx *Transaction) SetPrivate() {
+	tx.SetType(PrivateTx)
 }

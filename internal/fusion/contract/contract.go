@@ -3,16 +3,33 @@ package contract
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
 
+	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind/backends"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
+)
+
+var (
+	// ErrNoCode is returned by call and transact operations for which the requested
+	// recipient contract to operate on does not exist in the state db or does not
+	// have any code associated with it (i.e. suicided).
+	ErrNoCode = errors.New("no contract code at given address")
+
+	// This error is raised when attempting to perform a pending state action
+	// on a backend that doesn't implement PendingContractCaller.
+	ErrNoPendingState = errors.New("backend does not support pending state")
+
+	// This error is returned by WaitDeployed if contract creation leaves an
+	// empty contract behind.
+	ErrNoCodeAfterDeploy = errors.New("no contract code after deployment")
 )
 
 type FilterLogsOptions struct {
@@ -44,7 +61,7 @@ type Contract interface {
 	FilterLogs(eventName string, event interface{}, options ...WithFilterLogsOption) ([]*Event, error) // event parameter is a event struct, e.g. CreateProduct{}
 }
 
-type contract struct {
+type contract struct { //NOTE:like boundcontract
 	abi     abi.ABI
 	address common.Address
 	backend bind.ContractBackend
@@ -146,4 +163,82 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 		})
 	}
 	return events, nil
+}
+
+// transact executes an actual transaction invocation, first deriving any missing
+// authorization fields, and then scheduling the transaction for execution.
+func (c *contract) transact(opts *TransactOpts, contract *common.Address, input []byte) (*types.Transaction, error) {
+	var err error
+
+	// Ensure a valid value field and resolve the account nonce
+	value := opts.Value
+	if value == nil {
+		value = new(big.Int)
+	}
+	var nonce uint64
+	if opts.Nonce == nil {
+		nonce, err = c.backend.PendingNonceAt(ensureContext(opts.Context), opts.From)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+		}
+	} else {
+		nonce = opts.Nonce.Uint64()
+	}
+	// Figure out the gas allowance and gas price values
+	gasPrice := opts.GasPrice
+	if gasPrice == nil {
+		gasPrice, err = c.backend.SuggestGasPrice(ensureContext(opts.Context))
+		if err != nil {
+			return nil, fmt.Errorf("failed to suggest gas price: %v", err)
+		}
+	}
+	gasLimit := opts.GasLimit
+	if gasLimit == 0 {
+		// Gas estimation cannot succeed without code for method invocations
+		if contract != nil {
+			if code, err := c.backend.PendingCodeAt(ensureContext(opts.Context), c.address); err != nil {
+				return nil, err
+			} else if len(code) == 0 {
+				return nil, ErrNoCode
+			}
+		}
+		// If the contract surely has code (or code is not needed), estimate the transaction
+		msg := cpcclient.CallMsg{From: opts.From, To: contract, Value: value, Data: input}
+		gasLimit, err = c.backend.EstimateGas(ensureContext(opts.Context), msg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to estimate gas needed: %v", err)
+		}
+	}
+	// Create the transaction, sign it and schedule it for execution
+	var rawTx *types.Transaction
+	if contract == nil {
+		rawTx = types.NewContractCreation(nonce, value, gasLimit, gasPrice, input)
+	} else {
+		rawTx = types.NewTransaction(nonce, c.address, value, gasLimit, gasPrice, input)
+	}
+	if opts.Signer == nil {
+		return nil, errors.New("no signer to authorize the transaction with")
+	}
+
+	ChainID := big.NewInt(41) //TODO
+
+	// signedTx, err := opts.Signer(types.NewCep1Signer(configs.ChainConfigInfo().ChainID), opts.From, rawTx)
+	signedTx, err := opts.Signer(types.NewCep1Signer(ChainID), opts.From, rawTx)
+
+	if err != nil {
+		return nil, err
+	}
+	if err := c.backend.SendTransaction(ensureContext(opts.Context), signedTx); err != nil {
+		return nil, err
+	}
+	return signedTx, nil
+}
+
+// ensureContext is a helper method to ensure a context is not nil, even if the
+// user specified it as such.
+func ensureContext(ctx context.Context) context.Context {
+	if ctx == nil {
+		return context.TODO()
+	}
+	return ctx
 }
