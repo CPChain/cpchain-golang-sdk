@@ -7,8 +7,10 @@ import (
 	"path/filepath"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 
 	"github.com/zgljl2012/slog"
 )
@@ -93,9 +95,34 @@ func (c *cpchain) CreateWallet(path string, password string) (*Account, error) {
 	return &acct, nil
 }
 
+// TODO 还没写完
 func (c *cpchain) DeployContract() (common.Address, error) {
 	return common.Address{}, nil
 }
+
+//TODO chainid 要加进去
+func DeployContract2(abi string, bin string, auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, contract.Contract, error) {
+	address, tx, contract, err := contract.DeployContract(abi, auth, common.FromHex(bin), backend)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, contract, nil
+}
+
+// func DeployRnode(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Rnode, error) {
+// 	parsed, err := abi.JSON(strings.NewReader(RnodeABI))
+// 	if err != nil {
+// 		return common.Address{}, nil, nil, err
+// 	}
+// 	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(RnodeBin), backend)
+// 	if err != nil {
+// 		return common.Address{}, nil, nil, err
+// 	}
+// 	return address, tx, &Rnode{RnodeCaller: RnodeCaller{contract: contract}, RnodeTransactor: RnodeTransactor{contract: contract}, RnodeFilterer: RnodeFilterer{contract: contract}}, nil
+// }
 
 func StoreKey(key *Key, acct Account, password string) error { //TODO 是否应该写入接口内
 	keyjson, err := EncryptKey(key, password, 2, 1)

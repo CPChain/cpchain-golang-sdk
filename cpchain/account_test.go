@@ -36,6 +36,24 @@ func TestGetKey(t *testing.T) {
 	}
 }
 
+func TestGetNonce(t *testing.T) {
+	clientOnTestnet, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet := clientOnTestnet.LoadWallet(keystorePath)
+
+	client, err := cpcclient.Dial(endpoint)
+
+	fromAddr := wallet.Addr()
+
+	nonce, err := client.PendingNonceAt(context.Background(), fromAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("nonce:", nonce)
+}
+
 func TestSignTx(t *testing.T) {
 	clientOnTestnet, err := cpchain.NewCPChain(cpchain.Testnet)
 	if err != nil {

@@ -1,10 +1,10 @@
 package contract
 
 import (
-	"bytes"
-	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
@@ -13,29 +13,9 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 )
 
-// SignerFn is a signer function callback when a contract requires a method to
-// sign the transaction before submission.
-
-type SignerFn func(types.Signer, common.Address, *types.Transaction) (*types.Transaction, error)
-
-// TransactOpts is the collection of authorization data required to create a
-// valid Ethereum transaction.
-
-type TransactOpts struct {
-	From   common.Address // Ethereum account to send the transaction from
-	Nonce  *big.Int       // Nonce to use for the transaction execution (nil = use pending state)
-	Signer SignerFn       // Method to use for signing the transaction (mandatory)
-
-	Value    *big.Int // Funds to transfer along along the transaction (nil = 0 = no funds)
-	GasPrice *big.Int // Gas price to use for the transaction execution (nil = gas price oracle)
-	GasLimit uint64   // Gas limit to set for the transaction execution (0 = estimate)
-
-	Context context.Context // Network context to support cancellation and timeouts (nil = no timeout)
-}
-
 // The difference between NewBoundContract and NewContract is that the return type is different
-func NewBoundContract(abiData []byte, address common.Address, backend bind.ContractBackend) (*contract, error) {
-	instance, err := abi.JSON(bytes.NewReader(abiData))
+func NewBoundContract(abiData string, address common.Address, backend bind.ContractBackend) (*contract, error) {
+	instance, err := abi.JSON(strings.NewReader(abiData))
 	if err != nil {
 		return nil, fmt.Errorf("new bound contract failed: %v", err)
 	}
@@ -46,7 +26,7 @@ func NewBoundContract(abiData []byte, address common.Address, backend bind.Contr
 	}, nil
 }
 
-func DeployContract(abiData []byte, opts *TransactOpts, bytecode []byte, backend bind.ContractBackend, params ...interface{}) (common.Address, *types.Transaction, *contract, error) {
+func DeployContract(abiData string, opts *bind.TransactOpts, bytecode []byte, backend bind.ContractBackend, params ...interface{}) (common.Address, *types.Transaction, *contract, error) {
 	c, err := NewBoundContract(abiData, common.Address{}, backend)
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -61,4 +41,13 @@ func DeployContract(abiData []byte, opts *TransactOpts, bytecode []byte, backend
 	}
 	c.address = crypto.CreateAddress(opts.From, tx.Nonce())
 	return c.address, tx, c, nil
+}
+
+// from chain/tools/smartcontract/depoly/utils
+func NewTransactor(privateKey *ecdsa.PrivateKey, nonce *big.Int) *bind.TransactOpts {
+	auth := bind.NewKeyedTransactor(privateKey)
+	if nonce.Cmp(big.NewInt(-1)) > 0 {
+		auth.Nonce = nonce
+	}
+	return auth
 }

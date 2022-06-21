@@ -47,6 +47,13 @@ func (c *Client) PendingNonceAt(ctx context.Context, account common.Address) (ui
 	return uint64(result), err
 }
 
+// PendingCodeAt returns the contract code of the given account in the pending state.
+func (c *Client) PendingCodeAt(ctx context.Context, account common.Address) ([]byte, error) {
+	var result hexutil.Bytes
+	err := c.c.CallContext(ctx, &result, "eth_getCode", account, "pending")
+	return result, err
+}
+
 // SuggestGasPrice retrieves the currently suggested gas price to allow a timely
 // execution of a transaction.
 func (c *Client) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
@@ -80,6 +87,33 @@ func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) err
 		return fmt.Errorf("encode to bytes error: %v", err)
 	}
 	return c.c.CallContext(ctx, nil, "eth_sendRawTransaction", common.ToHex(data))
+}
+
+// FilterLogs executes a filter query.
+func (c *Client) FilterLogs(ctx context.Context, q types.FilterQuery) ([]types.Log, error) {
+	var result []types.Log
+	err := c.c.CallContext(ctx, &result, "eth_getLogs", toFilterArg(q))
+	return result, err
+}
+
+func toFilterArg(q types.FilterQuery) interface{} {
+	arg := map[string]interface{}{
+		"fromBlock": toBlockNumArg(q.FromBlock),
+		"toBlock":   toBlockNumArg(q.ToBlock),
+		"address":   q.Addresses,
+		"topics":    q.Topics,
+	}
+	if q.FromBlock == nil {
+		arg["fromBlock"] = "0x0"
+	}
+	return arg
+}
+
+func toBlockNumArg(number *big.Int) string {
+	if number == nil {
+		return "latest"
+	}
+	return hexutil.EncodeBig(number)
 }
 
 func toCallArg(msg CallMsg) interface{} {

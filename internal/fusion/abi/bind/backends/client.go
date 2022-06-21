@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
@@ -82,4 +83,27 @@ func (c *clientBackend) FilterLogs(ctx context.Context, query types.FilterQuery)
 		return nil, fmt.Errorf("Unmarshal failed: %v", err)
 	}
 	return rawlogs2logs(data), nil
+}
+
+// TODO 以后将clientbackend 替换掉cpcclient
+func (c *clientBackend) PendingNonceAt(ctx context.Context, account common.Address) (uint64, error) {
+
+	return uint64(0), nil
+}
+
+func (c *clientBackend) PendingCodeAt(ctx context.Context, account common.Address) ([]byte, error) {
+
+	return nil, nil
+}
+
+func (c *clientBackend) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
+	return nil, nil
+}
+
+func (c *clientBackend) EstimateGas(ctx context.Context, msg cpcclient.CallMsg) (uint64, error) {
+	return uint64(0), nil
+}
+
+func (c *clientBackend) SendTransaction(ctx context.Context, tx *types.Transaction) error {
+	return nil
 }

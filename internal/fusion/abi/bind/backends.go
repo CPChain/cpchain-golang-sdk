@@ -55,6 +55,12 @@ type ContractFilterer interface {
 // ContractBackend defines the methods needed to work with contracts on a read-write basis.
 type ContractBackend interface {
 	ContractFilterer
-	ContractCaller
+	// ContractCaller
 	ContractTransactor
 }
+
+// type ContractBackend2 interface {
+// 	ContractFilterer
+// 	ContractCaller
+// 	ContractTransactor
+// }

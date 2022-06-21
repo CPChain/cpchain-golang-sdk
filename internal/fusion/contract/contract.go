@@ -165,9 +165,10 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 	return events, nil
 }
 
+//TODO chainID
 // transact executes an actual transaction invocation, first deriving any missing
 // authorization fields, and then scheduling the transaction for execution.
-func (c *contract) transact(opts *TransactOpts, contract *common.Address, input []byte) (*types.Transaction, error) {
+func (c *contract) transact(opts *bind.TransactOpts, contract *common.Address, input []byte) (*types.Transaction, error) {
 	var err error
 
 	// Ensure a valid value field and resolve the account nonce
