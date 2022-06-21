@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"path/filepath"
 
+	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
@@ -95,14 +96,17 @@ func (c *cpchain) CreateWallet(path string, password string) (*Account, error) {
 	return &acct, nil
 }
 
-// TODO 还没写完
-func (c *cpchain) DeployContract() (common.Address, error) {
-	return common.Address{}, nil
+func (c *cpchain) DeployContract(abi string, bin string, auth *bind.TransactOpts) (common.Address, *types.Transaction, contract.Contract, error) {
+	// backend := c.provider //TODO 未来要用c.provider 替换cpcclient
+	backend, err := cpcclient.Dial(c.network.JsonRpcUrl)
+	if err != nil {
+		return common.Address{}, nil, nil, nil
+	}
+	return DeployContract2(abi, bin, auth, backend, c.network.ChainId)
 }
 
-//TODO chainid 要加进去
-func DeployContract2(abi string, bin string, auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, contract.Contract, error) {
-	address, tx, contract, err := contract.DeployContract(abi, auth, common.FromHex(bin), backend)
+func DeployContract2(abi string, bin string, auth *bind.TransactOpts, backend bind.ContractBackend, chainId uint) (common.Address, *types.Transaction, contract.Contract, error) {
+	address, tx, contract, err := contract.DeployContract(abi, auth, common.FromHex(bin), backend, chainId)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}

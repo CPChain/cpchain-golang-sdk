@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
@@ -51,9 +52,9 @@ type CPChain interface {
 	//load a wallet by keystore path
 	LoadWallet(path string) Wallet //TODO 是否要加error
 	//create a wallet by dirpath and password
-	CreateWallet(path string, password string) (*Account, error) //返回值或需更改
+	CreateWallet(path string, password string) (*Account, error)
 	//deploy contract to chain
-	DeployContract() (common.Address, error)
+	DeployContract(abi string, bin string, auth *bind.TransactOpts) (common.Address, *types.Transaction, contract.Contract, error) //返回值或需更改
 }
 
 // TODO simulate chain

@@ -26,7 +26,7 @@ func NewBoundContract(abiData string, address common.Address, backend bind.Contr
 	}, nil
 }
 
-func DeployContract(abiData string, opts *bind.TransactOpts, bytecode []byte, backend bind.ContractBackend, params ...interface{}) (common.Address, *types.Transaction, *contract, error) {
+func DeployContract(abiData string, opts *bind.TransactOpts, bytecode []byte, backend bind.ContractBackend, chainId uint, params ...interface{}) (common.Address, *types.Transaction, *contract, error) {
 	c, err := NewBoundContract(abiData, common.Address{}, backend)
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -35,7 +35,7 @@ func DeployContract(abiData string, opts *bind.TransactOpts, bytecode []byte, ba
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
-	tx, err := c.transact(opts, nil, append(bytecode, input...))
+	tx, err := c.transact(chainId, opts, nil, append(bytecode, input...))
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}

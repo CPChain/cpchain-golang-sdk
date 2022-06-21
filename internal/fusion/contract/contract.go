@@ -168,7 +168,7 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 //TODO chainID
 // transact executes an actual transaction invocation, first deriving any missing
 // authorization fields, and then scheduling the transaction for execution.
-func (c *contract) transact(opts *bind.TransactOpts, contract *common.Address, input []byte) (*types.Transaction, error) {
+func (c *contract) transact(chainId uint, opts *bind.TransactOpts, contract *common.Address, input []byte) (*types.Transaction, error) {
 	var err error
 
 	// Ensure a valid value field and resolve the account nonce
@@ -221,7 +221,7 @@ func (c *contract) transact(opts *bind.TransactOpts, contract *common.Address, i
 		return nil, errors.New("no signer to authorize the transaction with")
 	}
 
-	ChainID := big.NewInt(41) //TODO
+	ChainID := big.NewInt(int64(chainId)) //TODO
 
 	// signedTx, err := opts.Signer(types.NewCep1Signer(configs.ChainConfigInfo().ChainID), opts.From, rawTx)
 	signedTx, err := opts.Signer(types.NewCep1Signer(ChainID), opts.From, rawTx)

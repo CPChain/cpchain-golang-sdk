@@ -44,7 +44,7 @@ func main() {
 				fmt.Println("please input your password again")
 				fmt.Scanln(&passwordagian)
 				if passwordagian == password {
-					client, err := cpchain.NewCPChain(cpchain.Mainnet)
+					client, err := cpchain.NewCPChain(cpchain.Testnet)
 					if err != nil {
 						slog.Fatal(err)
 					}
