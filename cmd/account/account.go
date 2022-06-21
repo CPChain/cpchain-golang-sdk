@@ -59,7 +59,7 @@ func main() {
 					if err != nil {
 						slog.Fatal(err)
 					}
-					fmt.Println("account:", a.Address)
+					fmt.Println("account:", a.Address.Hex())
 					fmt.Println("path:", a.URL.Path)
 				} else {
 					fmt.Printf("%c[0;40;31m%s%c[0m", 0x1b, "ERROR: the password did not match the re-typed password", 0x1b)
