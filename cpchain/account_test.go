@@ -44,7 +44,9 @@ func TestGetNonce(t *testing.T) {
 	wallet := clientOnTestnet.LoadWallet(keystorePath)
 
 	client, err := cpcclient.Dial(endpoint)
-
+	if err != nil {
+		t.Fatal(err)
+	}
 	fromAddr := wallet.Addr()
 
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddr)

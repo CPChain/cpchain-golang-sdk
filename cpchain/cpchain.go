@@ -66,6 +66,11 @@ func WeiToCpc(wei *big.Int) *big.Int {
 	return wei.Div(wei, big.NewInt(1e18))
 }
 
+func (c *cpchain) Backend() (bind.ContractBackend, error) {
+	backend, err := cpcclient.Dial(c.network.JsonRpcUrl)
+	return backend, err
+}
+
 func (c *cpchain) Contract(abi []byte, address string) Contract {
 	contractIns, err := contract.NewContractWithProvider(
 		[]byte(abi),

@@ -28,7 +28,7 @@ const (
 
 func main() {
 	app := &cli.App{
-		Name:  "account",
+		Name:  "transfer",
 		Usage: "transfer",
 		Action: func(c *cli.Context) error {
 			value := c.Int64("value")
@@ -59,7 +59,7 @@ func main() {
 				return cli.NewExitError("ERROR: the password did not match the re-typed password", 1)
 			}
 
-			clientOnTestnet, err := cpchain.NewCPChain(cpchain.Testnet)
+			clientOnTestnet, err := cpchain.NewCPChain(cpchain.Testnet) //TODO 根据endpoint
 			if err != nil {
 				slog.Fatal(err)
 			}
@@ -100,13 +100,10 @@ func main() {
 			}
 			err = client.SendTransaction(context.Background(), signedTx)
 
-			fmt.Println(tx)
-			fmt.Println(signedTx)
-
 			if err != nil {
 				slog.Fatal(err)
 			}
-
+			fmt.Println("success")
 			return err
 		},
 	}
@@ -115,7 +112,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "endpoint, ep",
 			Usage: "Endpoint to interact with",
-			Value: "http://localhost:8501",
+			Value: "https://civilian.testnet.cpchain.io",
 		},
 
 		cli.StringFlag{

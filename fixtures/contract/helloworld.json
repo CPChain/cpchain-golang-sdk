@@ -1,0 +1,203 @@
+{
+  "contractName": "helloworld",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.8.10+commit.fc410830\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/helloworld.sol\":\"helloworld\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"project:/contracts/helloworld.sol\":{\"keccak256\":\"0x899bb38ce22863b8da9f6210bf6774a6d5b1e7213b2e411fd637b91190d3b1e8\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f1bc0e86e6cad5f76ff2869b7f10881a9fad6bc47f094ce67d13115ede8d56f8\",\"dweb:/ipfs/QmTmxysSVqeKfsa6v6L5p9SdriG19kxAhxwVnAjfdXaNo5\"]}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550603f80605d6000396000f3fe6080604052600080fdfea2646970667358221220cc46356d887799b33b3ca82fcf610da45d06ecf8fa0e763740abfbd51f6898ff64736f6c634300080a0033",
+  "deployedBytecode": "0x6080604052600080fdfea2646970667358221220cc46356d887799b33b3ca82fcf610da45d06ecf8fa0e763740abfbd51f6898ff64736f6c634300080a0033",
+  "immutableReferences": {},
+  "generatedSources": [],
+  "deployedGeneratedSources": [],
+  "sourceMap": "66:89:1:-:0;;;110:43;;;;;;;;;;138:10;130:5;;:18;;;;;;;;;;;;;;;;;;66:89;;;;;;",
+  "deployedSourceMap": "66:89:1:-:0;;;;;",
+  "source": "// SPDX-License-Identifier: MIT\npragma solidity >=0.4.22 <0.9.0;\n\ncontract helloworld {\n  address owner;\n  \n  constructor() {\n    owner = msg.sender;\n  }\n}\n",
+  "sourcePath": "E:\\chengtcode\\hellowordcontract\\contracts\\helloworld.sol",
+  "ast": {
+    "absolutePath": "project:/contracts/helloworld.sol",
+    "exportedSymbols": {
+      "helloworld": [
+        46
+      ]
+    },
+    "id": 47,
+    "license": "MIT",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 34,
+        "literals": [
+          "solidity",
+          ">=",
+          "0.4",
+          ".22",
+          "<",
+          "0.9",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "32:32:1"
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "helloworld",
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "id": 46,
+        "linearizedBaseContracts": [
+          46
+        ],
+        "name": "helloworld",
+        "nameLocation": "75:10:1",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "constant": false,
+            "id": 36,
+            "mutability": "mutable",
+            "name": "owner",
+            "nameLocation": "98:5:1",
+            "nodeType": "VariableDeclaration",
+            "scope": 46,
+            "src": "90:13:1",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_address",
+              "typeString": "address"
+            },
+            "typeName": {
+              "id": 35,
+              "name": "address",
+              "nodeType": "ElementaryTypeName",
+              "src": "90:7:1",
+              "stateMutability": "nonpayable",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              }
+            },
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 44,
+              "nodeType": "Block",
+              "src": "124:29:1",
+              "statements": [
+                {
+                  "expression": {
+                    "id": 42,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "id": 39,
+                      "name": "owner",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 36,
+                      "src": "130:5:1",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "expression": {
+                        "id": 40,
+                        "name": "msg",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 4294967281,
+                        "src": "138:3:1",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_message",
+                          "typeString": "msg"
+                        }
+                      },
+                      "id": 41,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "sender",
+                      "nodeType": "MemberAccess",
+                      "src": "138:10:1",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "130:18:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 43,
+                  "nodeType": "ExpressionStatement",
+                  "src": "130:18:1"
+                }
+              ]
+            },
+            "id": 45,
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [],
+            "name": "",
+            "nameLocation": "-1:-1:-1",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 37,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "121:2:1"
+            },
+            "returnParameters": {
+              "id": 38,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "124:0:1"
+            },
+            "scope": 46,
+            "src": "110:43:1",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          }
+        ],
+        "scope": 47,
+        "src": "66:89:1",
+        "usedErrors": []
+      }
+    ],
+    "src": "32:124:1"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.8.10+commit.fc410830.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.4.7",
+  "updatedAt": "2022-06-21T05:44:18.215Z",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  }
+}

@@ -55,6 +55,8 @@ type CPChain interface {
 	CreateWallet(path string, password string) (*Account, error)
 	//deploy contract to chain
 	DeployContract(abi string, bin string, auth *bind.TransactOpts) (common.Address, *types.Transaction, contract.Contract, error) //返回值或需更改
+	//return backend
+	Backend() (bind.ContractBackend, error)
 }
 
 // TODO simulate chain
