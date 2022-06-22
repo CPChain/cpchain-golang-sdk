@@ -55,7 +55,7 @@ func main() {
 					if err != nil {
 						slog.Fatal(err)
 					}
-					a, err := client.CreateWallet("e:/chengtcode/cpchain-golang-sdk/fixtures/keystore", password)
+					a, err := client.CreateAccount("e:/chengtcode/cpchain-golang-sdk/fixtures/keystore", password)
 					if err != nil {
 						slog.Fatal(err)
 					}

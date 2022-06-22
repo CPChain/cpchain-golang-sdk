@@ -2,6 +2,7 @@ package cpchain
 
 import (
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 	"path/filepath"
@@ -11,7 +12,6 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 
 	"github.com/zgljl2012/slog"
 )
@@ -20,6 +20,16 @@ type cpchain struct {
 	network  Network
 	provider fusion.Provider
 	web3     fusion.Web3
+}
+
+func GetNetWork(endpoint string) (Network, error) {
+	if endpoint == Mainnet.JsonRpcUrl {
+		return Mainnet, nil
+	} else if endpoint == Testnet.JsonRpcUrl {
+		return Testnet, nil
+	} else {
+		return Network{}, errors.New("endpoint is error")
+	}
 }
 
 func NewCPChain(network Network) (CPChain, error) {
@@ -86,10 +96,20 @@ func (c *cpchain) Contract(abi []byte, address string) Contract {
 }
 
 func (c *cpchain) LoadWallet(path string) Wallet {
-	return ReadAccount(path)
+	account := ReadAccount(path) // 获取账户信息
+	// walletbkd := backends.NewClientBackend(c.provider) // 创建一个client
+	walletbkd, err := cpcclient.Dial(c.network.JsonRpcUrl)
+	if err != nil {
+		slog.Fatal(err)
+	}
+	return &WalletInstance{
+		account: *account,
+		backend: walletbkd,
+		network: c.network,
+	}
 }
 
-func (c *cpchain) CreateWallet(path string, password string) (*Account, error) {
+func (c *cpchain) CreateAccount(path string, password string) (*Account, error) {
 	key, err := newKey(rand.Reader)
 	if err != nil {
 		return nil, err
@@ -100,38 +120,6 @@ func (c *cpchain) CreateWallet(path string, password string) (*Account, error) {
 	}
 	return &acct, nil
 }
-
-func (c *cpchain) DeployContract(abi string, bin string, auth *bind.TransactOpts) (common.Address, *types.Transaction, contract.Contract, error) {
-	// backend := c.provider //TODO 未来要用c.provider 替换cpcclient
-	backend, err := cpcclient.Dial(c.network.JsonRpcUrl)
-	if err != nil {
-		return common.Address{}, nil, nil, nil
-	}
-	return DeployContract2(abi, bin, auth, backend, c.network.ChainId)
-}
-
-func DeployContract2(abi string, bin string, auth *bind.TransactOpts, backend bind.ContractBackend, chainId uint) (common.Address, *types.Transaction, contract.Contract, error) {
-	address, tx, contract, err := contract.DeployContract(abi, auth, common.FromHex(bin), backend, chainId)
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-	return address, tx, contract, nil
-}
-
-// func DeployRnode(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Rnode, error) {
-// 	parsed, err := abi.JSON(strings.NewReader(RnodeABI))
-// 	if err != nil {
-// 		return common.Address{}, nil, nil, err
-// 	}
-// 	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(RnodeBin), backend)
-// 	if err != nil {
-// 		return common.Address{}, nil, nil, err
-// 	}
-// 	return address, tx, &Rnode{RnodeCaller: RnodeCaller{contract: contract}, RnodeTransactor: RnodeTransactor{contract: contract}, RnodeFilterer: RnodeFilterer{contract: contract}}, nil
-// }
 
 func StoreKey(key *Key, acct Account, password string) error { //TODO 是否应该写入接口内
 	keyjson, err := EncryptKey(key, password, 2, 1)

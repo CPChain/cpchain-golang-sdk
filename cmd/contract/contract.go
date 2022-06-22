@@ -1,17 +1,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	// "io/ioutil"
-	"math/big"
 
 	"github.com/CPChain/cpchain-golang-sdk/cmd/contract/utils"
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 	"github.com/urfave/cli"
 	"github.com/zgljl2012/slog"
 )
@@ -40,7 +37,6 @@ func main() {
 
 			cfpath, err := filepath.Abs(contractFilePath)
 
-			Abi, Bin, err := utils.ReadContract(cfpath)
 			if err != nil {
 				slog.Fatal(err)
 			}
@@ -63,29 +59,8 @@ func main() {
 			}
 			wallet := clientOnTestnet.LoadWallet(fpath)
 
-			backend, err := clientOnTestnet.Backend()
-			if err != nil {
-				slog.Fatal(err)
-			}
+			err = wallet.DeployContractByFile(cfpath, password)
 
-			Key, err := wallet.GetKey(password)
-			if err != nil {
-				slog.Fatal(err)
-			}
-			fromAddr := wallet.Addr()
-
-			nonce, err := backend.PendingNonceAt(context.Background(), fromAddr)
-			if err != nil {
-				slog.Fatal(err)
-			}
-
-			auth := contract.NewTransactor(Key.PrivateKey, new(big.Int).SetUint64(nonce))
-
-			fmt.Println("start depoly contract")
-			_, _, _, err = clientOnTestnet.DeployContract(Abi, Bin, auth)
-			if err != nil {
-				slog.Fatal(err)
-			}
 			fmt.Println("success")
 			return err
 		},

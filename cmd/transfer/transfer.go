@@ -1,18 +1,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	// "io/ioutil"
-	"math/big"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
-	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 	"github.com/urfave/cli"
 	"github.com/zgljl2012/slog"
 )
@@ -35,7 +30,6 @@ func main() {
 			endpoint := c.String("endpoint")
 			keystorePath := c.String("keystore")
 			targetAddr := c.String("to")
-			chainId := c.Uint64("chainId")
 
 			if !c.IsSet("value") ||
 				!c.IsSet("endpoint") ||
@@ -58,51 +52,17 @@ func main() {
 			} else {
 				return cli.NewExitError("ERROR: the password did not match the re-typed password", 1)
 			}
-
-			clientOnTestnet, err := cpchain.NewCPChain(cpchain.Testnet) //TODO 根据endpoint
+			network, err := cpchain.GetNetWork(endpoint)
+			if err != nil {
+				slog.Fatal(err)
+			}
+			clientOnTestnet, err := cpchain.NewCPChain(network) //TODO 根据endpoint
 			if err != nil {
 				slog.Fatal(err)
 			}
 			wallet := clientOnTestnet.LoadWallet(fpath)
 
-			client, err := cpcclient.Dial(endpoint)
-
-			fromAddr := wallet.Addr()
-
-			nonce, err := client.PendingNonceAt(context.Background(), fromAddr)
-			if err != nil {
-				slog.Fatal(err)
-			}
-			gasPrice, err := client.SuggestGasPrice(context.Background())
-			if err != nil {
-				slog.Fatal(err)
-			}
-
-			to := common.HexToAddress(targetAddr)
-
-			valueInCpc := new(big.Int).Mul(big.NewInt(value), big.NewInt(Cpc))
-
-			msg := cpcclient.CallMsg{From: fromAddr, To: &to, Value: valueInCpc, Data: nil}
-
-			gasLimit, err := client.EstimateGas(context.Background(), msg)
-			if err != nil {
-				slog.Fatal(err)
-			}
-
-			tx := types.NewTransaction(nonce, to, valueInCpc, gasLimit, gasPrice, nil)
-
-			chainID := big.NewInt(0).SetUint64(chainId)
-
-			signedTx, err := wallet.SignTxWithPassword(password, tx, chainID)
-
-			if err != nil {
-				slog.Fatal(err)
-			}
-			err = client.SendTransaction(context.Background(), signedTx)
-
-			if err != nil {
-				slog.Fatal(err)
-			}
+			err = wallet.Transfer(targetAddr, password, value)
 			fmt.Println("success")
 			return err
 		},
@@ -129,11 +89,6 @@ func main() {
 		cli.IntFlag{
 			Name:  "value",
 			Usage: "Value in cpc",
-		},
-
-		cli.IntFlag{
-			Name:  "chainId",
-			Usage: "chainId",
 		},
 	}
 

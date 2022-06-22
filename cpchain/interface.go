@@ -51,10 +51,8 @@ type CPChain interface {
 	Contract(abi []byte, address string) Contract
 	//load a wallet by keystore path
 	LoadWallet(path string) Wallet //TODO 是否要加error
-	//create a wallet by dirpath and password
-	CreateWallet(path string, password string) (*Account, error)
-	//deploy contract to chain
-	DeployContract(abi string, bin string, auth *bind.TransactOpts) (common.Address, *types.Transaction, contract.Contract, error) //返回值或需更改
+	//Generate an account based on the password and store its keystore to the path
+	CreateAccount(path string, password string) (*Account, error)
 	//return backend
 	Backend() (bind.ContractBackend, error)
 }
@@ -62,9 +60,21 @@ type CPChain interface {
 // TODO simulate chain
 
 type Wallet interface {
+	// 返回钱包地址
 	Addr() common.Address
 
+	// 获取密钥
 	GetKey(password string) (*Key, error)
 
+	// 给交易签名
 	SignTxWithPassword(password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
+
+	// 交易
+	Transfer(password string, targetAddr string, value int64) error //TODO 返回值
+
+	// 通过文件部署合约
+	DeployContractByFile(path string, password string) error
+
+	// 通过abi和bin部署合约
+	DeployContract(abi string, bin string, password string) error
 }

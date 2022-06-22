@@ -1,15 +1,12 @@
 package cpchain_test
 
 import (
-	"context"
 	"io/ioutil"
 	"math/big"
 	"os"
 	"testing"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
-	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 )
 
 func TestGetBlockNumber(t *testing.T) {
@@ -83,14 +80,14 @@ func TestEvents(t *testing.T) {
 	}
 }
 
-func TestCreateWallet(t *testing.T) {
+func TestCreateAccount(t *testing.T) {
 	password := "123456"
 	client, err := cpchain.NewCPChain(cpchain.Testnet)
 	if err != nil {
 		t.Fatal(err)
 	}
 	path, err := ioutil.TempDir("e:/chengtcode/cpchain-golang-sdk/fixtures", "keystore")
-	a, err := client.CreateWallet(path, password)
+	a, err := client.CreateAccount(path, password)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,32 +105,3 @@ func TestCreateWallet(t *testing.T) {
 const Abi = "[{\"inputs\": [],\"stateMutability\": \"nonpayable\",\"type\": \"constructor\"}]"
 
 const Bin = `0x6080604052348015600f57600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550603f80605d6000396000f3fe6080604052600080fdfea2646970667358221220cc46356d887799b33b3ca82fcf610da45d06ecf8fa0e763740abfbd51f6898ff64736f6c634300080a0033`
-
-func TestDeployContract(t *testing.T) {
-	clientOnTestnet, err := cpchain.NewCPChain(cpchain.Testnet)
-	if err != nil {
-		t.Fatal(err)
-	}
-	wallet := clientOnTestnet.LoadWallet(keystorePath)
-
-	Key, err := wallet.GetKey(password)
-	if err != nil {
-		t.Fatal(err)
-	}
-	client, err := cpcclient.Dial(endpoint)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fromAddr := wallet.Addr()
-
-	nonce, err := client.PendingNonceAt(context.Background(), fromAddr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	auth := contract.NewTransactor(Key.PrivateKey, new(big.Int).SetUint64(nonce))
-	_, _, _, err = clientOnTestnet.DeployContract(Abi, Bin, auth)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
