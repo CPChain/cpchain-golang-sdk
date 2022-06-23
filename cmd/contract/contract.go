@@ -9,13 +9,9 @@ import (
 
 	"github.com/CPChain/cpchain-golang-sdk/cmd/contract/utils"
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
+	"github.com/CPChain/cpchain-golang-sdk/tools"
 	"github.com/urfave/cli"
 	"github.com/zgljl2012/slog"
-)
-
-var (
-	password      string
-	passwordagian string
 )
 
 func main() {
@@ -40,15 +36,7 @@ func main() {
 			if err != nil {
 				slog.Fatal(err)
 			}
-			fmt.Println("please input your password") //TODO 改成其他形式的
-			fmt.Scanln(&password)
-			fmt.Println("please input your password again")
-			fmt.Scanln(&passwordagian)
-			if passwordagian == password {
-
-			} else {
-				return cli.NewExitError("ERROR: the password did not match the re-typed password", 1)
-			}
+			password, err := tools.GetPassword("Please input your password:", true)
 			network, err := utils.GetNetWork(endpoint)
 			if err != nil {
 				slog.Fatal(err)

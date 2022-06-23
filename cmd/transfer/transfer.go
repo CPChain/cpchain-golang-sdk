@@ -8,13 +8,9 @@ import (
 	// "io/ioutil"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
+	"github.com/CPChain/cpchain-golang-sdk/tools"
 	"github.com/urfave/cli"
 	"github.com/zgljl2012/slog"
-)
-
-var (
-	password      string
-	passwordagian string
 )
 
 const (
@@ -34,8 +30,7 @@ func main() {
 			if !c.IsSet("value") ||
 				!c.IsSet("endpoint") ||
 				!c.IsSet("to") ||
-				!c.IsSet("keystore") ||
-				!c.IsSet("chainId") {
+				!c.IsSet("keystore") {
 				fmt.Println("Need more parameter ! Check parameters with ./transfer -h please.")
 				return cli.NewExitError("Need more parameter ! Check parameters with ./transfer -h please. ", 1)
 			}
@@ -43,14 +38,10 @@ func main() {
 			if er != nil {
 				fmt.Println(er)
 			}
-			fmt.Println("please input your password") //TODO 改成其他形式的
-			fmt.Scanln(&password)
-			fmt.Println("please input your password again")
-			fmt.Scanln(&passwordagian)
-			if passwordagian == password {
 
-			} else {
-				return cli.NewExitError("ERROR: the password did not match the re-typed password", 1)
+			password, err := tools.GetPassword("Please input your password:", true)
+			if err != nil {
+				return cli.NewExitError("ERROR:", 1)
 			}
 			network, err := cpchain.GetNetWork(endpoint)
 			if err != nil {
