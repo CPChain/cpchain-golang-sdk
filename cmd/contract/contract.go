@@ -7,7 +7,6 @@ import (
 
 	// "io/ioutil"
 
-	"github.com/CPChain/cpchain-golang-sdk/cmd/contract/utils"
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
 	"github.com/CPChain/cpchain-golang-sdk/tools"
 	"github.com/urfave/cli"
@@ -37,7 +36,7 @@ func main() {
 				slog.Fatal(err)
 			}
 			password, err := tools.GetPassword("Please input your password:", true)
-			network, err := utils.GetNetWork(endpoint)
+			network, err := cpchain.GetNetWork(endpoint)
 			if err != nil {
 				slog.Fatal(err)
 			}
@@ -46,7 +45,10 @@ func main() {
 				slog.Fatal(err)
 			}
 			wallet := clientOnTestnet.LoadWallet(fpath)
-
+			confirm := tools.AskForConfirmation("Are you sure to deploy this contract?")
+			if !confirm {
+				return nil
+			}
 			err = wallet.DeployContractByFile(cfpath, password)
 
 			fmt.Println("success")

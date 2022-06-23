@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
+	"github.com/CPChain/cpchain-golang-sdk/tools"
 	"github.com/urfave/cli"
 	"github.com/zgljl2012/slog"
 )
@@ -46,25 +47,20 @@ func main() {
 				if err != nil {
 					fmt.Println(err)
 				}
-				fmt.Println("please input your password")
-				fmt.Scanln(&password)
-				fmt.Println("please input your password again")
-				fmt.Scanln(&passwordagian)
-				if passwordagian == password {
-					client, err := cpchain.NewCPChain(cpchain.Testnet)
-					if err != nil {
-						slog.Fatal(err)
-					}
-					a, err := client.CreateAccount("e:/chengtcode/cpchain-golang-sdk/fixtures/keystore", password)
-					if err != nil {
-						slog.Fatal(err)
-					}
-					fmt.Println("account:", a.Address.Hex())
-					fmt.Println("path:", a.URL.Path)
-				} else {
-					fmt.Printf("%c[0;40;31m%s%c[0m", 0x1b, "ERROR: the password did not match the re-typed password", 0x1b)
+				password, err := tools.GetPassword("Please input your password:", true)
+				if err != nil {
+					return nil
 				}
-				fmt.Println("success")
+				client, err := cpchain.NewCPChain(cpchain.Testnet)
+				if err != nil {
+					slog.Fatal(err)
+				}
+				a, err := client.CreateAccount(keystorePath, password)
+				if err != nil {
+					slog.Fatal(err)
+				}
+				fmt.Println("account:", a.Address.Hex())
+				fmt.Println("path:", a.URL.Path)
 				return nil
 			},
 		},

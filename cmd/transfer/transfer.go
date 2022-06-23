@@ -38,7 +38,6 @@ func main() {
 			if er != nil {
 				fmt.Println(er)
 			}
-
 			password, err := tools.GetPassword("Please input your password:", true)
 			if err != nil {
 				return cli.NewExitError("ERROR:", 1)
@@ -53,7 +52,11 @@ func main() {
 			}
 			wallet := clientOnTestnet.LoadWallet(fpath)
 
-			err = wallet.Transfer(targetAddr, password, value)
+			confirm := tools.AskForConfirmation("Are you sure to tranfer?")
+			if !confirm {
+				return nil
+			}
+			err = wallet.Transfer(password, targetAddr, value)
 			fmt.Println("success")
 			return err
 		},
