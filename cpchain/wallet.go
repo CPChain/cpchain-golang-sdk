@@ -62,12 +62,20 @@ const (
 	Cpc = 1e18
 )
 
-func (w *WalletInstance) Transfer(password string, targetAddr string, value int64) error {
+func (w *WalletInstance) Transfer(password string, targetAddr string, value int64) (*types.Transaction, error) {
 	fromAddr := w.Addr()
 
 	nonce, err := w.backend.PendingNonceAt(context.Background(), fromAddr)
+	if err != nil {
+		slog.Fatal("Get nonce failed: %v", err)
+		return nil, err
+	}
 
 	gasPrice, err := w.backend.SuggestGasPrice(context.Background())
+	if err != nil {
+		slog.Fatal("Get gasprice failed: %v", err)
+		return nil, err
+	}
 
 	to := common.HexToAddress(targetAddr)
 
@@ -76,22 +84,31 @@ func (w *WalletInstance) Transfer(password string, targetAddr string, value int6
 	msg := cpcclient.CallMsg{From: fromAddr, To: &to, Value: valueInCpc, Data: nil} //TODO
 
 	gasLimit, err := w.backend.EstimateGas(context.Background(), msg)
+	if err != nil {
+		slog.Fatal("Get gaslimit failed: %v", err)
+		return nil, err
+	}
 
 	tx := types.NewTransaction(nonce, to, valueInCpc, gasLimit, gasPrice, nil)
 
 	chainID := big.NewInt(0).SetUint64(uint64(w.network.ChainId))
 
 	signedTx, err := w.SignTxWithPassword(password, tx, chainID)
+	if err != nil {
+		slog.Fatal("Sign tx failed: %v", err)
+		return nil, err
+	}
 
 	err = w.backend.SendTransaction(context.Background(), signedTx)
-
 	if err != nil {
-		return err
+		slog.Fatal("Send transaction failed: %v", err)
+		return nil, err
 	}
-	return nil
+
+	return signedTx, nil
 }
 
-func (w *WalletInstance) DeployContractByFile(path string, password string) error {
+func (w *WalletInstance) DeployContractByFile(path string, password string) (common.Address, *types.Transaction, error) {
 	abi, bin, err := ReadContract(path)
 	if err != nil {
 		slog.Fatal(err)
@@ -99,25 +116,27 @@ func (w *WalletInstance) DeployContractByFile(path string, password string) erro
 	return w.DeployContract(abi, bin, password)
 }
 
-func (w *WalletInstance) DeployContract(abi string, bin string, password string) error {
+func (w *WalletInstance) DeployContract(abi string, bin string, password string) (common.Address, *types.Transaction, error) {
 	Key, err := w.GetKey(password)
 	if err != nil {
 		slog.Fatal(err)
+		return common.Address{}, nil, nil
 	}
 
 	nonce, err := w.backend.PendingNonceAt(context.Background(), w.Addr())
 	if err != nil {
 		slog.Fatal(err)
+		return common.Address{}, nil, nil
 	}
 
 	auth := contract.NewTransactor(Key.PrivateKey, new(big.Int).SetUint64(nonce))
 
 	// address, tx, contract, err := contract.DeployContract(abi, auth, common.FromHex(bin), w.backend, w.network.ChainId)
-	_, _, _, err = contract.DeployContract(abi, auth, common.FromHex(bin), w.backend, w.network.ChainId)
+	address, tx, _, err := contract.DeployContract(abi, auth, common.FromHex(bin), w.backend, w.network.ChainId)
 	if err != nil {
-		return nil
+		return common.Address{}, nil, nil
 	}
-	return nil
+	return address, tx, nil
 }
 
 var (

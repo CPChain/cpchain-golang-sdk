@@ -49,9 +49,10 @@ func main() {
 			if !confirm {
 				return nil
 			}
-			err = wallet.DeployContractByFile(cfpath, password)
-
-			fmt.Println("success")
+			address, tx, err := wallet.DeployContractByFile(cfpath, password)
+			fmt.Println("Account:", address.Hex())
+			fmt.Println("Tx hash:", tx.Hash().Hex())
+			fmt.Println("Contract Depolyed!")
 			return err
 		},
 	}

@@ -56,8 +56,9 @@ func main() {
 			if !confirm {
 				return nil
 			}
-			err = wallet.Transfer(password, targetAddr, value)
-			fmt.Println("success")
+			tx, err := wallet.Transfer(password, targetAddr, value)
+			fmt.Printf("Tx hash: %v", tx.Hash().Hex())
+			fmt.Println("tranfer!")
 			return err
 		},
 	}

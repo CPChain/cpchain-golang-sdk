@@ -59,8 +59,9 @@ func main() {
 				if err != nil {
 					slog.Fatal(err)
 				}
-				fmt.Println("account:", a.Address.Hex())
-				fmt.Println("path:", a.URL.Path)
+				fmt.Println("Account:", a.Address.Hex())
+				fmt.Println("Path:", a.URL.Path)
+				fmt.Println("Create account successful")
 				return nil
 			},
 		},

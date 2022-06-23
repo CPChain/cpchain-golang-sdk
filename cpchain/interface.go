@@ -70,11 +70,11 @@ type Wallet interface {
 	SignTxWithPassword(password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
 
 	// 交易
-	Transfer(password string, targetAddr string, value int64) error //TODO 返回值
+	Transfer(password string, targetAddr string, value int64) (*types.Transaction, error) //TODO 返回值
 
 	// 通过文件部署合约
-	DeployContractByFile(path string, password string) error
+	DeployContractByFile(path string, password string) (common.Address, *types.Transaction, error)
 
 	// 通过abi和bin部署合约
-	DeployContract(abi string, bin string, password string) error
+	DeployContract(abi string, bin string, password string) (common.Address, *types.Transaction, error)
 }

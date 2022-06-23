@@ -13,10 +13,11 @@ func TestWalletTransfer(t *testing.T) {
 	}
 	wallet := clientOnTestnet.LoadWallet(keystorePath)
 
-	err = wallet.Transfer(password, targetAddr, 1)
+	tx, err := wallet.Transfer(password, targetAddr, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("Tx hash: %v", tx.Hash().Hex())
 }
 
 func TestWalletDeploy(t *testing.T) {
@@ -26,8 +27,11 @@ func TestWalletDeploy(t *testing.T) {
 	}
 	wallet := clientOnTestnet.LoadWallet(keystorePath)
 
-	err = wallet.DeployContractByFile(keystorePath, password)
+	address, tx, err := wallet.DeployContractByFile(keystorePath, password)
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Logf("address: %v", address.Hex())
+	t.Logf("txhash: %v", tx.Hash().Hex())
+	t.Logf("tx: %v", tx)
 }
