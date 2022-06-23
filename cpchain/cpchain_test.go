@@ -102,6 +102,21 @@ func TestCreateAccount(t *testing.T) {
 	os.RemoveAll(path)
 }
 
-const Abi = "[{\"inputs\": [],\"stateMutability\": \"nonpayable\",\"type\": \"constructor\"}]"
+const Abi = "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]"
 
 const Bin = `0x6080604052348015600f57600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550603f80605d6000396000f3fe6080604052600080fdfea2646970667358221220cc46356d887799b33b3ca82fcf610da45d06ecf8fa0e763740abfbd51f6898ff64736f6c634300080a0033`
+
+func TestReadContract(t *testing.T) {
+	abi, bin, err := cpchain.ReadContract(cfpath)
+	t.Log(abi)
+	t.Log(Abi)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if abi != Abi {
+		t.Fatal("abi! = Abi")
+	}
+	if bin != Bin {
+		t.Fatal("bin != Bin")
+	}
+}

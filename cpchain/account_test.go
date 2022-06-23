@@ -18,6 +18,7 @@ var (
 	targetAddr   = "0x4f5625efef254760301d2766c6cc98f05722963e"
 	chainId      = uint64(41)
 	password     = "test123456!"
+	cfpath       = "e:/chengtcode/cpchain-golang-sdk/fixtures/contract/helloworld.json"
 )
 
 const (

@@ -1,10 +1,14 @@
 package cpchain
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/big"
+	"os"
+	"path/filepath"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
@@ -116,10 +120,36 @@ func (w *WalletInstance) DeployContract(abi string, bin string, password string)
 	return nil
 }
 
-const Abi = "[{\"inputs\": [],\"stateMutability\": \"nonpayable\",\"type\": \"constructor\"}]"
-
-const Bin = `0x6080604052348015600f57600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550603f80605d6000396000f3fe6080604052600080fdfea2646970667358221220cc46356d887799b33b3ca82fcf610da45d06ecf8fa0e763740abfbd51f6898ff64736f6c634300080a0033`
+var (
+	bufs         = new(bufio.Reader)
+	contractjson struct {
+		Abi interface{} `json:"abi"`
+		Bin string      `json:"bytecode"`
+	}
+)
 
 func ReadContract(path string) (string, string, error) {
-	return Abi, Bin, nil
+	fpath, err := filepath.Abs(path)
+	fmt.Println(fpath)
+	if err != nil {
+		slog.Fatal(err)
+	}
+	contractFile, err := os.Open(fpath)
+	if err != nil {
+		slog.Fatal(err)
+	}
+	defer contractFile.Close()
+	bufs.Reset(contractFile)
+	// Parse the address.
+	err = json.NewDecoder(bufs).Decode(&contractjson)
+	if err != nil {
+		return "", "", nil
+	}
+	abijson, err := json.Marshal(contractjson.Abi)
+	if err != nil {
+		return "", contractjson.Bin, nil
+	}
+	abistring := string(abijson)
+
+	return abistring, contractjson.Bin, err
 }
