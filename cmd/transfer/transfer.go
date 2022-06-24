@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	// "io/ioutil"
 
@@ -38,9 +39,9 @@ func main() {
 			if er != nil {
 				fmt.Println(er)
 			}
-			password, err := tools.GetPassword("Please input your password:", true)
+			password, err := tools.GetPassword("Please input your password:", false)
 			if err != nil {
-				return cli.NewExitError("ERROR:", 1)
+				return cli.NewExitError("ERROR", 1)
 			}
 			network, err := cpchain.GetNetWork(endpoint)
 			if err != nil {
@@ -57,6 +58,7 @@ func main() {
 				return nil
 			}
 			tx, err := wallet.Transfer(password, targetAddr, value)
+			time.Sleep(8 * time.Second)
 			fmt.Printf("Tx hash: %v", tx.Hash().Hex())
 			fmt.Println("tranfer!")
 			return err

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	// "io/ioutil"
 
@@ -35,7 +36,7 @@ func main() {
 			if err != nil {
 				slog.Fatal(err)
 			}
-			password, err := tools.GetPassword("Please input your password:", true)
+			password, err := tools.GetPassword("Please input your password:", false) //TODO 不显示星号
 			network, err := cpchain.GetNetWork(endpoint)
 			if err != nil {
 				slog.Fatal(err)
@@ -50,6 +51,7 @@ func main() {
 				return nil
 			}
 			address, tx, err := wallet.DeployContractByFile(cfpath, password)
+			time.Sleep(10 * time.Second)
 			fmt.Println("Account:", address.Hex())
 			fmt.Println("Tx hash:", tx.Hash().Hex())
 			fmt.Println("Contract Depolyed!")

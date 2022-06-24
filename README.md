@@ -9,7 +9,7 @@ This project is only support get blocks and events now. If you want to develop s
 
 ### Create account
 
-```
+```bash
 go run cmd/account/account.go new -keystorepath ./fixture/account
 ```
 

@@ -149,7 +149,6 @@ var (
 
 func ReadContract(path string) (string, string, error) {
 	fpath, err := filepath.Abs(path)
-	fmt.Println(fpath)
 	if err != nil {
 		slog.Fatal(err)
 	}
