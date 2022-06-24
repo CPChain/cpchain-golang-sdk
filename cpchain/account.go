@@ -73,11 +73,10 @@ var (
 
 const KeyStoreScheme = "keystore"
 
-func ReadAccount(path string) *Account {
+func ReadAccount(path string) (*Account, error) {
 	fd, err := os.Open(path)
 	if err != nil {
-		// log.Debug("Failed to open keystore file", "path", path, "err", err)
-		return nil
+		return nil, fmt.Errorf("failed to open keystore file, path: %s, err: %v", path, err)
 	}
 	defer fd.Close()
 	buf.Reset(fd)
@@ -87,11 +86,10 @@ func ReadAccount(path string) *Account {
 	addr := common.HexToAddress(keys.Address)
 	switch {
 	case err != nil:
-		// log.Debug("Failed to decode keystore key", "path", path, "err", err)
+		return nil, fmt.Errorf("failed to decode keystore key, path: %s, err: %v", path, err)
 	case (addr == common.Address{}):
-		// log.Debug("Failed to decode keystore key", "path", path, "err", "missing or zero address")
+		return nil, fmt.Errorf("failed to decode keystore key, path: %s, err: missing or zero address", path)
 	default:
-		return &Account{Address: addr, URL: URL{Scheme: KeyStoreScheme, Path: path}}
+		return &Account{Address: addr, URL: URL{Scheme: KeyStoreScheme, Path: path}}, nil
 	}
-	return nil
 }

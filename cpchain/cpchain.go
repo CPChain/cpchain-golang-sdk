@@ -95,8 +95,11 @@ func (c *cpchain) Contract(abi []byte, address string) Contract {
 	}
 }
 
-func (c *cpchain) LoadWallet(path string) Wallet {
-	account := ReadAccount(path) // 获取账户信息
+func (c *cpchain) LoadWallet(path string) (Wallet, error) {
+	account, err := ReadAccount(path) // 获取账户信息
+	if err != nil {
+		return nil, fmt.Errorf("load wallet failed: %v", err)
+	}
 	// walletbkd := backends.NewClientBackend(c.provider) // 创建一个client
 	walletbkd, err := cpcclient.Dial(c.network.JsonRpcUrl)
 	if err != nil {
@@ -106,7 +109,7 @@ func (c *cpchain) LoadWallet(path string) Wallet {
 		account: *account,
 		backend: walletbkd,
 		network: c.network,
-	}
+	}, nil
 }
 
 func (c *cpchain) CreateAccount(path string, password string) (*Account, error) {

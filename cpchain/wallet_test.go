@@ -11,7 +11,7 @@ func TestWalletTransfer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wallet := clientOnTestnet.LoadWallet(keystorePath)
+	wallet, _ := clientOnTestnet.LoadWallet(keystorePath)
 
 	tx, err := wallet.Transfer(password, targetAddr, 1)
 	if err != nil {
@@ -25,7 +25,7 @@ func TestWalletDeploy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wallet := clientOnTestnet.LoadWallet(keystorePath)
+	wallet, _ := clientOnTestnet.LoadWallet(keystorePath)
 
 	address, tx, err := wallet.DeployContractByFile(keystorePath, password)
 	if err != nil {

@@ -86,12 +86,18 @@ func TestCreateAccount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path, err := ioutil.TempDir("e:/chengtcode/cpchain-golang-sdk/fixtures", "keystore")
+	path, err := ioutil.TempDir(os.TempDir(), "keystore")
+	if err != nil {
+		t.Fatal(err)
+	}
 	a, err := client.CreateAccount(path, password)
 	if err != nil {
 		t.Fatal(err)
 	}
-	w := client.LoadWallet(a.URL.Path)
+	w, err := client.LoadWallet(a.URL.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
 	key, err := w.GetKey(password)
 	if key.Address != a.Address {
 		t.Fatal("account error")

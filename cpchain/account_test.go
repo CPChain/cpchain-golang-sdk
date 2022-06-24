@@ -14,11 +14,11 @@ import (
 var (
 	value        = int64(1)
 	endpoint     = "https://civilian.testnet.cpchain.io"
-	keystorePath = "e:/chengtcode/cpchain-golang-sdk/fixtures/keystore/UTC--2022-06-09T05-48-04.258507200Z--52c5323efb54b8a426e84e4b383b41dcb9f7e977"
+	keystorePath = "../fixtures/keystore/UTC--2022-06-09T05-48-04.258507200Z--52c5323efb54b8a426e84e4b383b41dcb9f7e977"
 	targetAddr   = "0x4f5625efef254760301d2766c6cc98f05722963e"
 	chainId      = uint64(41)
 	password     = "test123456!"
-	cfpath       = "e:/chengtcode/cpchain-golang-sdk/fixtures/contract/helloworld.json"
+	cfpath       = "../fixtures/contract/helloworld.json"
 )
 
 const (
@@ -30,11 +30,21 @@ func TestGetKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wallet := clientOnTestnet.LoadWallet(keystorePath)
-	_, err = wallet.GetKey(password)
+	wallet, err := clientOnTestnet.LoadWallet(keystorePath)
 	if err != nil {
 		t.Fatal(err)
 	}
+	expectAddr := "0xFD15C2932a60631222F7e6ffDdE7bDAB7237C2dC"
+	if wallet.Addr().Hex() != expectAddr {
+		t.Fatalf("expect %v to be %v", wallet.Addr().Hex(), expectAddr)
+	}
+	k, err := wallet.GetKey(password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = k
+	// TODO validate private key
+	// k.PrivateKey
 }
 
 func TestGetNonce(t *testing.T) {
@@ -42,7 +52,7 @@ func TestGetNonce(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wallet := clientOnTestnet.LoadWallet(keystorePath)
+	wallet, _ := clientOnTestnet.LoadWallet(keystorePath)
 
 	client, err := cpcclient.Dial(endpoint)
 	if err != nil {
@@ -62,9 +72,15 @@ func TestSignTx(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wallet := clientOnTestnet.LoadWallet(keystorePath)
+	wallet, err := clientOnTestnet.LoadWallet(keystorePath)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	client, err := cpcclient.Dial(endpoint)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	fromAddr := wallet.Addr()
 

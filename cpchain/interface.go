@@ -46,14 +46,15 @@ type CPChain interface {
 	// Get the current block number
 	BlockNumber() (uint64, error)
 	Block(number int) (*fusion.FullBlock, error)
-	// get balance
+	// Get balance
 	BalanceOf(address string) *big.Int
 	Contract(abi []byte, address string) Contract
-	//load a wallet by keystore path
-	LoadWallet(path string) Wallet //TODO 是否要加error
-	//Generate an account based on the password and store its keystore to the path
+	// Load a wallet by keystore path
+	LoadWallet(path string) (Wallet, error) // TODO 要加error
+	// Generate an account based on the password and store its keystore to the path
 	CreateAccount(path string, password string) (*Account, error)
-	//return backend
+	// Return backend
+	// FIXME remove Backend()
 	Backend() (bind.ContractBackend, error)
 }
 
@@ -68,6 +69,9 @@ type Wallet interface {
 
 	// 给交易签名
 	SignTxWithPassword(password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
+
+	// TODO
+	// SignTx(tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
 
 	// 交易
 	Transfer(password string, targetAddr string, value int64) (*types.Transaction, error) //TODO 返回值
