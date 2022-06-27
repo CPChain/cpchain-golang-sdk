@@ -45,7 +45,7 @@ func main() {
 			if err != nil {
 				slog.Fatal(err)
 			}
-			wallet := clientOnTestnet.LoadWallet(fpath)
+			wallet, err := clientOnTestnet.LoadWallet(fpath)
 			confirm := tools.AskForConfirmation("Are you sure to deploy this contract?")
 			if !confirm {
 				return nil
