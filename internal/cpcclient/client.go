@@ -84,7 +84,6 @@ func (c *Client) EstimateGas(ctx context.Context, msg CallMsg) (uint64, error) {
 // TransactionReceipt returns the receipt of a transaction by transaction hash.
 // Note that the receipt is not available for pending transactions.
 func (c *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
-	// fmt.Println(txHash.Hex())
 	var r *types.Receipt
 	err := c.c.CallContext(ctx, &r, "eth_getTransactionReceipt", txHash)
 	if err == nil {
