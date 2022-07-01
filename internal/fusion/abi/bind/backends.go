@@ -20,6 +20,16 @@ type ContractCaller interface {
 	CallContract(ctx context.Context, call cpcclient.CallMsg, blockNumber *big.Int) ([]byte, error)
 }
 
+// PendingContractCaller defines methods to perform contract calls on the pending state.
+// Call will try to discover this interface when access to the pending state is requested.
+// If the backend does not support the pending state, Call returns ErrNoPendingState.
+type PendingContractCaller interface {
+	// PendingCodeAt returns the code of the given account in the pending state.
+	PendingCodeAt(ctx context.Context, contract common.Address) ([]byte, error)
+	// PendingCallContract executes an cpchain contract call against the pending state.
+	PendingCallContract(ctx context.Context, call cpcclient.CallMsg) ([]byte, error)
+}
+
 // ContractTransactor defines the methods needed to allow operating with contract
 // on a write only basis. Beside the transacting method, the remainder are helpers
 // used when the user does not provide some needed values, but rather leaves it up
@@ -52,15 +62,21 @@ type ContractFilterer interface {
 	FilterLogs(ctx context.Context, query types.FilterQuery) ([]types.Log, error)
 }
 
+// DeployBackend wraps the operations needed by WaitMined and WaitDeployed.
+type DeployBackend interface {
+	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
+	CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error)
+}
+
 // ContractBackend defines the methods needed to work with contracts on a read-write basis.
 type ContractBackend interface {
 	ContractFilterer
-	// ContractCaller
+	ContractCaller
 	ContractTransactor
 }
 
-// type ContractBackend2 interface {
+// type PendingContractBackend interface {
 // 	ContractFilterer
-// 	ContractCaller
+// 	PendingContractCaller
 // 	ContractTransactor
 // }

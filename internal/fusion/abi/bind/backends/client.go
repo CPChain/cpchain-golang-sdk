@@ -107,3 +107,13 @@ func (c *clientBackend) EstimateGas(ctx context.Context, msg cpcclient.CallMsg) 
 func (c *clientBackend) SendTransaction(ctx context.Context, tx *types.Transaction) error {
 	return nil
 }
+
+func (c *clientBackend) CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error) {
+	return nil, nil
+}
+
+// ContractCall executes an cpchain contract call with the specified data as the
+// input.
+func (c *clientBackend) CallContract(ctx context.Context, call cpcclient.CallMsg, blockNumber *big.Int) ([]byte, error) {
+	return nil, nil
+}

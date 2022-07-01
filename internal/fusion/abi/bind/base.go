@@ -12,6 +12,13 @@ import (
 // sign the transaction before submission.
 type SignerFn func(types.Signer, common.Address, *types.Transaction) (*types.Transaction, error)
 
+type CallOpts struct {
+	Pending bool           // Whether to operate on the pending state or the last known one
+	From    common.Address // Optional the sender address, otherwise the first account is used
+
+	Context context.Context // Network context to support cancellation and timeouts (nil = no timeout)
+}
+
 type TransactOpts struct {
 	From   common.Address // Ethereum account to send the transaction from
 	Nonce  *big.Int       // Nonce to use for the transaction execution (nil = use pending state)
