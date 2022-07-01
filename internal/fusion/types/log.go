@@ -77,3 +77,40 @@ func (l *Log) DecodeRLP(s *rlp.Stream) error {
 	}
 	return err
 }
+
+// LogForStorage is a wrapper around a Log that flattens and parses the entire content of
+// a log including non-consensus fields.
+type LogForStorage Log
+
+// EncodeRLP implements rlp.Encoder.
+func (l *LogForStorage) EncodeRLP(w io.Writer) error {
+	return rlp.Encode(w, rlpStorageLog{
+		Address:     l.Address,
+		Topics:      l.Topics,
+		Data:        l.Data,
+		BlockNumber: l.BlockNumber,
+		TxHash:      l.TxHash,
+		TxIndex:     l.TxIndex,
+		BlockHash:   l.BlockHash,
+		Index:       l.Index,
+	})
+}
+
+// DecodeRLP implements rlp.Decoder.
+func (l *LogForStorage) DecodeRLP(s *rlp.Stream) error {
+	var dec rlpStorageLog
+	err := s.Decode(&dec)
+	if err == nil {
+		*l = LogForStorage{
+			Address:     dec.Address,
+			Topics:      dec.Topics,
+			Data:        dec.Data,
+			BlockNumber: dec.BlockNumber,
+			TxHash:      dec.TxHash,
+			TxIndex:     dec.TxIndex,
+			BlockHash:   dec.BlockHash,
+			Index:       dec.Index,
+		}
+	}
+	return err
+}

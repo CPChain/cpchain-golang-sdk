@@ -32,7 +32,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
 	// "bitbucket.org/cpchain/chain/commons/log"
 )
 

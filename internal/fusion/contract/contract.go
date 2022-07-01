@@ -59,6 +59,10 @@ type Event struct {
 
 type Contract interface {
 	FilterLogs(eventName string, event interface{}, options ...WithFilterLogsOption) ([]*Event, error) // event parameter is a event struct, e.g. CreateProduct{}
+	// Depoly(opts *bind.TransactOpts, bytecode []byte, chainId uint, params ...interface{}) (common.Address, *types.Transaction, *contract, error)
+	Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error
+
+	Transact(opts *bind.TransactOpts, chainId uint, method string, params ...interface{}) (*types.Transaction, error)
 }
 
 type contract struct { //NOTE:like boundcontract
@@ -70,6 +74,14 @@ type contract struct { //NOTE:like boundcontract
 // Contract
 func NewContractWithProvider(abi []byte, address common.Address, provider fusion.Provider) (Contract, error) {
 	backend := backends.NewClientBackend(provider)
+	return NewContract(abi, address, backend)
+}
+
+func NewContractWithUrl(abi []byte, address common.Address, url string) (Contract, error) {
+	backend, err := cpcclient.Dial(url)
+	if err != nil {
+		return nil, err
+	}
 	return NewContract(abi, address, backend)
 }
 
@@ -165,12 +177,71 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 	return events, nil
 }
 
+// view
+func (c *contract) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	// Don't crash on a lazy user
+	if opts == nil {
+		opts = new(bind.CallOpts)
+	}
+	// Pack the input, call and unpack the results
+	input, err := c.abi.Pack(method, params...)
+	if err != nil {
+		return err
+	}
+	var (
+		msg    = cpcclient.CallMsg{From: opts.From, To: &c.address, Data: input}
+		ctx    = ensureContext(opts.Context)
+		code   []byte
+		output []byte
+	)
+	if opts.Pending {
+		pb, ok := c.backend.(bind.PendingContractCaller)
+		if !ok {
+			return ErrNoPendingState
+		}
+		output, err = pb.PendingCallContract(ctx, msg)
+		if err == nil && len(output) == 0 {
+			// Make sure we have a contract to operate on, and bail out otherwise.
+			// NOTE: it may cause some edge case where the pending block doesn't add to chain and the tx which depends on it will eventually fail
+			if code, err = pb.PendingCodeAt(ctx, c.address); err != nil {
+				return err
+			} else if len(code) == 0 {
+				return ErrNoCode
+			}
+		}
+	} else {
+		output, err = c.backend.CallContract(ctx, msg, nil)
+		if err == nil && len(output) == 0 {
+			// Make sure we have a contract to operate on, and bail out otherwise.
+			if code, err = c.backend.CodeAt(ctx, c.address, nil); err != nil {
+				return err
+			} else if len(code) == 0 {
+				return ErrNoCode
+			}
+		}
+	}
+	if err != nil {
+		return err
+	}
+	fmt.Println("code", code)
+	return c.abi.Unpack(result, method, output)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (c *contract) Transact(opts *bind.TransactOpts, chainId uint, method string, params ...interface{}) (*types.Transaction, error) {
+	// Otherwise pack up the parameters and invoke the contract
+	input, err := c.abi.Pack(method, params...)
+	if err != nil {
+		return nil, err
+	}
+	return c.transact(chainId, opts, &c.address, input)
+}
+
 //TODO chainID
 // transact executes an actual transaction invocation, first deriving any missing
 // authorization fields, and then scheduling the transaction for execution.
 func (c *contract) transact(chainId uint, opts *bind.TransactOpts, contract *common.Address, input []byte) (*types.Transaction, error) {
 	var err error
-
 	// Ensure a valid value field and resolve the account nonce
 	value := opts.Value
 	if value == nil {
@@ -234,6 +305,36 @@ func (c *contract) transact(chainId uint, opts *bind.TransactOpts, contract *com
 	}
 	return signedTx, nil
 }
+
+// func (c *contract) Depoly(opts *bind.TransactOpts, bytecode []byte, chainId uint, params ...interface{}) (common.Address, *types.Transaction, *contract, error) { //TODO返回值*contract待定
+// 	input, err := c.abi.Pack("", params...)
+// 	if err != nil {
+// 		return common.Address{}, nil, nil, err
+// 	}
+// 	tx, err := c.transact(chainId, opts, nil, append(bytecode, input...))
+// 	if err != nil {
+// 		return common.Address{}, nil, nil, err
+// 	}
+// 	c.address = crypto.CreateAddress(opts.From, tx.Nonce())
+// 	return c.address, tx, c, nil
+// }
+
+// func DeployContract(abiData string, opts *bind.TransactOpts, bytecode []byte, backend bind.ContractBackend, chainId uint, params ...interface{}) (common.Address, *types.Transaction, *contract, error) {
+// 	c, err := NewBoundContract(abiData, common.Address{}, backend)
+// 	if err != nil {
+// 		return common.Address{}, nil, nil, err
+// 	}
+// 	input, err := c.abi.Pack("", params...)
+// 	if err != nil {
+// 		return common.Address{}, nil, nil, err
+// 	}
+// 	tx, err := c.transact(chainId, opts, nil, append(bytecode, input...))
+// 	if err != nil {
+// 		return common.Address{}, nil, nil, err
+// 	}
+// 	c.address = crypto.CreateAddress(opts.From, tx.Nonce())
+// 	return c.address, tx, c, nil
+// }
 
 // ensureContext is a helper method to ensure a context is not nil, even if the
 // user specified it as such.
