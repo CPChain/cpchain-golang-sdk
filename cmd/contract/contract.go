@@ -45,12 +45,12 @@ func main() {
 			if err != nil {
 				slog.Fatal(err)
 			}
-			wallet, err := clientOnTestnet.LoadWallet(fpath)
+			wallet, err := clientOnTestnet.LoadWallet(fpath, password)
 			confirm := tools.AskForConfirmation("Are you sure to deploy this contract?")
 			if !confirm {
 				return nil
 			}
-			address, tx, err := wallet.DeployContractByFile(cfpath, password)
+			address, tx, err := clientOnTestnet.DeployContractByFile(cfpath, wallet)
 			time.Sleep(10 * time.Second)
 			fmt.Println("Account:", address.Hex())
 			fmt.Println("Tx hash:", tx.Hash().Hex())

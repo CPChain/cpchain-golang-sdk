@@ -51,13 +51,13 @@ func main() {
 			if err != nil {
 				slog.Fatal(err)
 			}
-			wallet, err := clientOnTestnet.LoadWallet(fpath)
+			wallet, err := clientOnTestnet.LoadWallet(fpath, password)
 
 			confirm := tools.AskForConfirmation("Are you sure to tranfer?")
 			if !confirm {
 				return nil
 			}
-			tx, err := wallet.Transfer(password, targetAddr, value)
+			tx, err := wallet.Transfer(targetAddr, value)
 			time.Sleep(8 * time.Second)
 			fmt.Printf("Tx hash: %v", tx.Hash().Hex())
 			fmt.Println("tranfer!")
