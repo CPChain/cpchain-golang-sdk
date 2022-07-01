@@ -2,6 +2,7 @@ package cpcclient
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -16,6 +17,9 @@ import (
 type Client struct {
 	c *rpc.Client
 }
+
+// NotFound is returned by API methods if the requested item does not exist.
+var NotFound = errors.New("not found")
 
 // Dial connects a client to the given URL.
 func Dial(rawurl string) (*Client, error) {
@@ -77,6 +81,20 @@ func (c *Client) EstimateGas(ctx context.Context, msg CallMsg) (uint64, error) {
 	return uint64(hex), nil
 }
 
+// TransactionReceipt returns the receipt of a transaction by transaction hash.
+// Note that the receipt is not available for pending transactions.
+func (c *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+	// fmt.Println(txHash.Hex())
+	var r *types.Receipt
+	err := c.c.CallContext(ctx, &r, "eth_getTransactionReceipt", txHash)
+	if err == nil {
+		if r == nil {
+			return nil, NotFound
+		}
+	}
+	return r, err
+}
+
 // SendTransaction injects a signed transaction into the pending pool for execution.
 //
 // If the transaction was a contract creation use the TransactionReceipt method to get the
@@ -134,6 +152,42 @@ func toCallArg(msg CallMsg) interface{} {
 		arg["gasPrice"] = (*hexutil.Big)(msg.GasPrice)
 	}
 	return arg
+}
+
+// Contract Calling
+
+// CallContract executes a message call transaction, which is directly executed in the VM
+// of the node, but never mined into the blockchain.
+//
+// blockNumber selects the block height at which the call runs. It can be nil, in which
+// case the code is taken from the latest known block. Note that state from very old
+// blocks might not be available.
+func (c *Client) CallContract(ctx context.Context, msg CallMsg, blockNumber *big.Int) ([]byte, error) {
+	var hex hexutil.Bytes
+	err := c.c.CallContext(ctx, &hex, "eth_call", toCallArg(msg), toBlockNumArg(blockNumber))
+	if err != nil {
+		return nil, err
+	}
+	return hex, nil
+}
+
+// PendingCallContract executes a message call transaction using the EVM.
+// The state seen by the contract call is the pending state.
+func (c *Client) PendingCallContract(ctx context.Context, msg CallMsg) ([]byte, error) {
+	var hex hexutil.Bytes
+	err := c.c.CallContext(ctx, &hex, "eth_call", toCallArg(msg), "pending")
+	if err != nil {
+		return nil, err
+	}
+	return hex, nil
+}
+
+// CodeAt returns the contract code of the given account.
+// The block number can be nil, in which case the code is taken from the latest known block.
+func (c *Client) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
+	var result hexutil.Bytes
+	err := c.c.CallContext(ctx, &result, "eth_getCode", account, toBlockNumArg(blockNumber))
+	return result, err
 }
 
 type CallMsg struct {
