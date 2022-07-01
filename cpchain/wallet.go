@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -21,6 +19,7 @@ import (
 type WalletInstance struct {
 	account Account
 	backend bind.ContractBackend
+	key     *Key
 	network Network //TODO 只是为了获取chainid
 }
 
@@ -28,29 +27,42 @@ func (w *WalletInstance) Addr() common.Address {
 	return w.account.Address
 }
 
-func (w *WalletInstance) GetKey(password string) (*Key, error) {
-	// Load the key from the keystore and decrypt its contents
-	keyjson, err := ioutil.ReadFile(w.account.URL.Path)
-	if err != nil {
-		return nil, err
-	}
-	key, err := DecryptKey(keyjson, password)
-	if err != nil {
-		return nil, err
-	}
-	// Make sure we're really operating on the requested key (no swap attacks)
-	if key.Address != w.account.Address {
-		return nil, fmt.Errorf("key content mismatch: have account %x, want %x", key.Address, w.account.Address)
-	}
-	return key, nil
+func (w *WalletInstance) Key() *Key {
+	return w.key
 }
 
-func (w *WalletInstance) SignTxWithPassword(password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
-	key, err := w.GetKey(password)
-	if err != nil {
-		return nil, err
-	}
-	privateKey := key.PrivateKey
+// func (w *WalletInstance) GetKey(password string) (*Key, error) {
+// 	// Load the key from the keystore and decrypt its contents
+// 	keyjson, err := ioutil.ReadFile(w.account.URL.Path)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	key, err := DecryptKey(keyjson, password)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	// Make sure we're really operating on the requested key (no swap attacks)
+// 	if key.Address != w.account.Address {
+// 		return nil, fmt.Errorf("key content mismatch: have account %x, want %x", key.Address, w.account.Address)
+// 	}
+// 	return key, nil
+// }
+
+// func (w *WalletInstance) SignTxWithPassword(password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
+// 	key, err := w.GetKey(password)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	privateKey := key.PrivateKey
+// 	signTx, err := types.SignTx(tx, types.NewCep1Signer(chainID), privateKey)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return signTx, nil
+// }
+
+func (w *WalletInstance) SignTx(tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
+	privateKey := w.key.PrivateKey
 	signTx, err := types.SignTx(tx, types.NewCep1Signer(chainID), privateKey)
 	if err != nil {
 		return nil, err
@@ -62,7 +74,7 @@ const (
 	Cpc = 1e18
 )
 
-func (w *WalletInstance) Transfer(password string, targetAddr string, value int64) (*types.Transaction, error) {
+func (w *WalletInstance) Transfer(targetAddr string, value int64) (*types.Transaction, error) {
 	fromAddr := w.Addr()
 
 	nonce, err := w.backend.PendingNonceAt(context.Background(), fromAddr)
@@ -93,7 +105,7 @@ func (w *WalletInstance) Transfer(password string, targetAddr string, value int6
 
 	chainID := big.NewInt(0).SetUint64(uint64(w.network.ChainId))
 
-	signedTx, err := w.SignTxWithPassword(password, tx, chainID)
+	signedTx, err := w.SignTx(tx, chainID)
 	if err != nil {
 		slog.Fatal("Sign tx failed: %v", err)
 		return nil, err
@@ -108,35 +120,47 @@ func (w *WalletInstance) Transfer(password string, targetAddr string, value int6
 	return signedTx, nil
 }
 
-func (w *WalletInstance) DeployContractByFile(path string, password string) (common.Address, *types.Transaction, error) {
-	abi, bin, err := ReadContract(path)
-	if err != nil {
-		slog.Fatal(err)
-	}
-	return w.DeployContract(abi, bin, password)
-}
+// func (w *WalletInstance) DeployContractByFile(path string, password string) (common.Address, *types.Transaction, error) {
+// 	abi, bin, err := ReadContract(path)
+// 	if err != nil {
+// 		slog.Fatal(err)
+// 	}
+// 	return w.DeployContract(abi, bin, password)
+// }
 
-func (w *WalletInstance) DeployContract(abi string, bin string, password string) (common.Address, *types.Transaction, error) {
-	Key, err := w.GetKey(password)
-	if err != nil {
-		slog.Fatal(err)
-		return common.Address{}, nil, nil
-	}
+// func (w *WalletInstance) DeployContract(abi string, bin string, password string) (common.Address, *types.Transaction, error) {
+// 	Key, err := w.GetKey(password)
+// 	if err != nil {
+// 		slog.Fatal(err)
+// 		return common.Address{}, nil, nil
+// 	}
+
+// 	nonce, err := w.backend.PendingNonceAt(context.Background(), w.Addr())
+// 	if err != nil {
+// 		slog.Fatal(err)
+// 		return common.Address{}, nil, nil
+// 	}
+
+// 	auth := contract.NewTransactor(Key.PrivateKey, new(big.Int).SetUint64(nonce))
+
+// 	// address, tx, contract, err := contract.DeployContract(abi, auth, common.FromHex(bin), w.backend, w.network.ChainId)
+// 	address, tx, _, err := contract.DeployContract(abi, auth, common.FromHex(bin), w.backend, w.network.ChainId)
+// 	if err != nil {
+// 		return common.Address{}, nil, nil
+// 	}
+// 	return address, tx, nil
+// }
+
+func (w *WalletInstance) NewTransactor(password string) *bind.TransactOpts {
+	Key := w.key
 
 	nonce, err := w.backend.PendingNonceAt(context.Background(), w.Addr())
 	if err != nil {
-		slog.Fatal(err)
-		return common.Address{}, nil, nil
 	}
 
 	auth := contract.NewTransactor(Key.PrivateKey, new(big.Int).SetUint64(nonce))
 
-	// address, tx, contract, err := contract.DeployContract(abi, auth, common.FromHex(bin), w.backend, w.network.ChainId)
-	address, tx, _, err := contract.DeployContract(abi, auth, common.FromHex(bin), w.backend, w.network.ChainId)
-	if err != nil {
-		return common.Address{}, nil, nil
-	}
-	return address, tx, nil
+	return auth
 }
 
 var (

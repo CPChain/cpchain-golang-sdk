@@ -93,3 +93,20 @@ func ReadAccount(path string) (*Account, error) {
 		return &Account{Address: addr, URL: URL{Scheme: KeyStoreScheme, Path: path}}, nil
 	}
 }
+
+func GetKey(path string, account common.Address, password string) (*Key, error) {
+	// Load the key from the keystore and decrypt its contents
+	keyjson, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	key, err := DecryptKey(keyjson, password)
+	if err != nil {
+		return nil, err
+	}
+	// Make sure we're really operating on the requested key (no swap attacks)
+	if key.Address != account {
+		return nil, fmt.Errorf("key content mismatch: have account %x, want %x", key.Address, account)
+	}
+	return key, nil
+}

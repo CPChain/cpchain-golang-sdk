@@ -2,11 +2,13 @@ package cpchain_test
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"testing"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
 	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 )
@@ -30,7 +32,7 @@ func TestGetKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wallet, err := clientOnTestnet.LoadWallet(keystorePath)
+	wallet, err := clientOnTestnet.LoadWallet(keystorePath, password)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,10 +40,7 @@ func TestGetKey(t *testing.T) {
 	if wallet.Addr().Hex() != expectAddr {
 		t.Fatalf("expect %v to be %v", wallet.Addr().Hex(), expectAddr)
 	}
-	k, err := wallet.GetKey(password)
-	if err != nil {
-		t.Fatal(err)
-	}
+	k := wallet.Key()
 	_ = k
 	// TODO validate private key
 	// k.PrivateKey
@@ -52,7 +51,7 @@ func TestGetNonce(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wallet, _ := clientOnTestnet.LoadWallet(keystorePath)
+	wallet, _ := clientOnTestnet.LoadWallet(keystorePath, password)
 
 	client, err := cpcclient.Dial(endpoint)
 	if err != nil {
@@ -72,7 +71,7 @@ func TestSignTx(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wallet, err := clientOnTestnet.LoadWallet(keystorePath)
+	wallet, err := clientOnTestnet.LoadWallet(keystorePath, password)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +107,7 @@ func TestSignTx(t *testing.T) {
 
 	chainID := big.NewInt(0).SetUint64(chainId)
 
-	signedTx, err := wallet.SignTxWithPassword(password, tx, chainID)
+	signedTx, err := wallet.SignTx(tx, chainID)
 
 	if err != nil {
 		t.Fatal(err)
@@ -118,5 +117,35 @@ func TestSignTx(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println(signedTx.Hash().Hex())
+	receipt, err := bind.WaitMined(context.Background(), client, signedTx)
+
+	if err != nil {
+		t.Fatalf("failed to waitMined tx:%v", err)
+	}
+	if receipt.Status == types.ReceiptStatusSuccessful {
+		t.Log("confirm transaction success")
+	} else {
+		t.Error("confirm transaction failed", "status", receipt.Status,
+			"receipt.TxHash", receipt.TxHash)
+	}
+
+}
+
+// test receipt by txhash
+func TestReceipt(t *testing.T) {
+	client, err := cpcclient.Dial(endpoint)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hash_hex := "0x2c65bde3b32cd3bb05740330f3b5cd25455e2f81edae40c524b59f670b315998"
+	hash := common.HexToHash(hash_hex)
+	t.Log(hash)
+	t.Log(hash.Hex())
+	receipt, err := client.TransactionReceipt(context.Background(), hash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(receipt.TxHash)
 
 }

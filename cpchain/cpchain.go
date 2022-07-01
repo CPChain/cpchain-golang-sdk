@@ -1,6 +1,7 @@
 package cpchain
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -12,8 +13,7 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
-
-	"github.com/zgljl2012/slog"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 )
 
 type cpchain struct {
@@ -22,6 +22,7 @@ type cpchain struct {
 	web3     fusion.Web3
 }
 
+// get network according to the endpoint
 func GetNetWork(endpoint string) (Network, error) {
 	if endpoint == Mainnet.JsonRpcUrl {
 		return Mainnet, nil
@@ -76,26 +77,27 @@ func WeiToCpc(wei *big.Int) *big.Int {
 	return wei.Div(wei, big.NewInt(1e18))
 }
 
-func (c *cpchain) Backend() (bind.ContractBackend, error) {
-	backend, err := cpcclient.Dial(c.network.JsonRpcUrl)
-	return backend, err
-}
-
+// create a contract instance
 func (c *cpchain) Contract(abi []byte, address string) Contract {
-	contractIns, err := contract.NewContractWithProvider(
+	// contractIns, err := contract.NewContractWithProvider(
+	// 	[]byte(abi),
+	// 	common.HexToAddress(address),
+	// 	c.provider,
+	// )
+	contractIns, err := contract.NewContractWithUrl(
 		[]byte(abi),
 		common.HexToAddress(address),
-		c.provider,
+		c.network.JsonRpcUrl,
 	)
 	if err != nil {
-		slog.Fatal(err)
+		return nil //TODO 错误处理
 	}
 	return &contractInternal{
 		contractIns: contractIns,
 	}
 }
 
-func (c *cpchain) LoadWallet(path string) (Wallet, error) {
+func (c *cpchain) LoadWallet(path string, password string) (Wallet, error) {
 	account, err := ReadAccount(path) // 获取账户信息
 	if err != nil {
 		return nil, fmt.Errorf("load wallet failed: %v", err)
@@ -103,25 +105,64 @@ func (c *cpchain) LoadWallet(path string) (Wallet, error) {
 	// walletbkd := backends.NewClientBackend(c.provider) // 创建一个client
 	walletbkd, err := cpcclient.Dial(c.network.JsonRpcUrl)
 	if err != nil {
-		slog.Fatal(err)
+		return nil, err
+	}
+	key, err := GetKey(path, account.Address, password)
+	if err != nil {
+		return nil, err
 	}
 	return &WalletInstance{
 		account: *account,
 		backend: walletbkd,
 		network: c.network,
+		key:     key,
 	}, nil
 }
 
 func (c *cpchain) CreateAccount(path string, password string) (*Account, error) {
+	pathabs, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
 	key, err := newKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
-	acct := Account{Address: key.Address, URL: URL{Scheme: KeyStoreScheme, Path: filepath.Join(path, keyFileName(key.Address))}} //TODO path 是否是绝对路径的问题
+	acct := Account{Address: key.Address, URL: URL{Scheme: KeyStoreScheme, Path: filepath.Join(pathabs, keyFileName(key.Address))}}
 	if err = StoreKey(key, acct, password); err != nil {
 		return nil, err
 	}
 	return &acct, nil
+}
+
+func (c *cpchain) DeployContractByFile(path string, w Wallet) (common.Address, *types.Transaction, error) {
+	abi, bin, err := ReadContract(path)
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+	return c.DeployContract(abi, bin, w)
+}
+
+func (c *cpchain) DeployContract(abi string, bin string, w Wallet) (common.Address, *types.Transaction, error) {
+	key := w.Key()
+	backend, err := cpcclient.Dial(c.network.JsonRpcUrl)
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+
+	nonce, err := backend.PendingNonceAt(context.Background(), w.Addr())
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+
+	auth := contract.NewTransactor(key.PrivateKey, new(big.Int).SetUint64(nonce))
+
+	// // address, tx, contract, err := contract.DeployContract(abi, auth, common.FromHex(bin), w.backend, w.network.ChainId)
+	address, tx, _, err := contract.DeployContract(abi, auth, common.FromHex(bin), backend, c.network.ChainId)
+	if err != nil {
+		return common.Address{}, nil, nil
+	}
+	return address, tx, nil
 }
 
 func StoreKey(key *Key, acct Account, password string) error { //TODO 是否应该写入接口内
@@ -151,4 +192,41 @@ func (c *contractInternal) Events(eventName string, event interface{}, options .
 		return nil, err
 	}
 	return events, nil
+}
+
+func (c *contractInternal) CallFunction(w Wallet, chainId uint, method string, params ...interface{}) (*types.Transaction, error) {
+	key := w.Key()
+	backend, err := cpcclient.Dial(Testnet.JsonRpcUrl) //TODO
+	// Key, err := w.GetKey(w)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce, err := backend.PendingNonceAt(context.Background(), w.Addr())
+	if err != nil {
+		return nil, err
+	}
+
+	auth := contract.NewTransactor(key.PrivateKey, new(big.Int).SetUint64(nonce))
+
+	tx, err := c.contractIns.Transact(auth, chainId, method, params...)
+	if err != nil {
+		return nil, err
+	}
+	return tx, err
+}
+
+func (c *contractInternal) View(address common.Address, result interface{}, method string, params ...interface{}) error {
+	callOpts := NewCallOpt(address)
+	err := c.contractIns.Call(callOpts, result, method, params...)
+	fmt.Println("---", result)
+	return err
+}
+
+func NewCallOpt(Address common.Address) *bind.CallOpts {
+	return &bind.CallOpts{
+		Pending: false,
+		From:    Address,
+		Context: context.Background(),
+	}
 }

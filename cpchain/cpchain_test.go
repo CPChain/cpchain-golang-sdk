@@ -1,12 +1,17 @@
 package cpchain_test
 
 import (
+	"context"
+	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"os"
 	"testing"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
+	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi"
 )
 
 func TestGetBlockNumber(t *testing.T) {
@@ -94,11 +99,11 @@ func TestCreateAccount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	w, err := client.LoadWallet(a.URL.Path)
+	w, err := client.LoadWallet(a.URL.Path, password)
 	if err != nil {
 		t.Fatal(err)
 	}
-	key, err := w.GetKey(password)
+	key := w.Key()
 	if key.Address != a.Address {
 		t.Fatal("account error")
 	}
@@ -125,4 +130,135 @@ func TestReadContract(t *testing.T) {
 	if bin != Bin {
 		t.Fatal("bin != Bin")
 	}
+}
+
+func TestContractDeploy(t *testing.T) {
+	abi, bin, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	address, tx, err := client.DeployContract(abi, bin, wallet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("address:%v", address.Hex())
+	t.Logf("Tx hash: %v", tx.Hash().Hex())
+}
+
+// const helloaddress = "0x63c7AdaA9EEf9f89cbB8960AFAdca50782d259f4"
+// const helloaddress = "0x9865Cb52E790e30E115a435d23683e2078a3ABB7"
+const helloaddress = "0xfD44A7aEFaDfa872Ade30EBE152Fc37E6977fe70"
+
+// 0x63c7AdaA9EEf9f89cbB8960AFAdca50782d259f4
+var number []byte
+
+var (
+	Address, _ = abi.NewType("address")
+)
+
+func TestContractTransact(t *testing.T) {
+	// number = abi.U256(big.NewInt(4))
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contracthello := client.Contract([]byte(Abi), helloaddress)
+	tx, err := contracthello.CallFunction(wallet, 41, "helloToEveryOne")
+	if err != nil {
+		fmt.Println("----1")
+		t.Fatal(err)
+	}
+	t.Logf("tx hash: %v", tx.Hash().Hex())
+}
+
+func TestU256(t *testing.T) {
+	number = abi.U256(big.NewInt(4))
+	fmt.Printf("value: %d\n", number)
+	fmt.Printf("number of bytes: %d", len(number))
+}
+
+type HelloToSomeOne struct {
+	Target cpchain.Address `json:"target"`
+}
+
+func TestContractEvent(t *testing.T) {
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contracthello := client.Contract([]byte(Abi), helloaddress)
+	events, err := contracthello.Events("HelloToSomeOne", HelloToSomeOne{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Count:", len(events))
+	for _, e := range events {
+		args := e.Data.(*HelloToSomeOne)
+		t.Log(e.BlockNumber, args.Target.Hex())
+		// check event name
+		if e.Name != "HelloToSomeOne" {
+			t.Fatal("event name is error")
+		}
+	}
+}
+
+func TestContractView(t *testing.T) {
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contracthello := client.Contract([]byte(Abi), helloaddress)
+
+	var hellotime = big.NewInt(0)
+	// var hellotime *types.Receipt
+	err = contracthello.View(wallet.Addr(), &hellotime, "hellotime")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(hellotime)
+	if hellotime == nil || hellotime.Uint64() == 0 {
+		t.Error("error")
+	}
+}
+
+func TestGetCode(t *testing.T) {
+	// clientOnTestnet, err := cpchain.NewCPChain(cpchain.Testnet)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	client, err := cpcclient.Dial(endpoint)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// blocknumber, err := clientOnTestnet.BlockNumber()
+	result, err := client.CodeAt(context.Background(), cpchain.HexToAddress(helloaddress), nil)
+	fmt.Println(hex.EncodeToString(result))
 }

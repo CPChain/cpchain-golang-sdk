@@ -4,7 +4,6 @@ import (
 	"math/big"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
@@ -40,6 +39,10 @@ func WithEventsOptionsToBlock(block uint64) WithEventsOptionsOption {
 type Contract interface {
 	// TODO 如果事件非常多，如10000条事件，是否会分批获取？
 	Events(eventName string, event interface{}, options ...WithEventsOptionsOption) ([]*contract.Event, error)
+
+	CallFunction(w Wallet, chainId uint, method string, params ...interface{}) (*types.Transaction, error)
+
+	View(address common.Address, result interface{}, method string, params ...interface{}) error
 }
 
 type CPChain interface {
@@ -48,14 +51,16 @@ type CPChain interface {
 	Block(number int) (*fusion.FullBlock, error)
 	// Get balance
 	BalanceOf(address string) *big.Int
+	// New Contract instance
 	Contract(abi []byte, address string) Contract
 	// Load a wallet by keystore path
-	LoadWallet(path string) (Wallet, error) // TODO 要加error
+	LoadWallet(path string, password string) (Wallet, error) // TODO 要加error
 	// Generate an account based on the password and store its keystore to the path
 	CreateAccount(path string, password string) (*Account, error)
-	// Return backend
-	// FIXME remove Backend()
-	Backend() (bind.ContractBackend, error)
+	// 通过文件部署合约
+	DeployContractByFile(path string, w Wallet) (common.Address, *types.Transaction, error)
+	// 通过abi和bin部署合约
+	DeployContract(abi string, bin string, w Wallet) (common.Address, *types.Transaction, error)
 }
 
 // TODO simulate chain
@@ -65,20 +70,11 @@ type Wallet interface {
 	Addr() common.Address
 
 	// 获取密钥
-	GetKey(password string) (*Key, error)
+	Key() *Key
 
-	// 给交易签名
-	SignTxWithPassword(password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
-
-	// TODO
-	// SignTx(tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
+	// sign transaction
+	SignTx(tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
 
 	// 交易
-	Transfer(password string, targetAddr string, value int64) (*types.Transaction, error) //TODO 返回值
-
-	// 通过文件部署合约
-	DeployContractByFile(path string, password string) (common.Address, *types.Transaction, error)
-
-	// 通过abi和bin部署合约
-	DeployContract(abi string, bin string, password string) (common.Address, *types.Transaction, error)
+	Transfer(targetAddr string, value int64) (*types.Transaction, error) //TODO 返回值
 }
