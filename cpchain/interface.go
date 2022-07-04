@@ -7,6 +7,7 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
+	"github.com/CPChain/cpchain-golang-sdk/internal/keystore"
 )
 
 type Event = contract.Event
@@ -70,7 +71,7 @@ type Wallet interface {
 	Addr() common.Address
 
 	// 获取密钥
-	Key() *Key
+	Key() *keystore.Key
 
 	// sign transaction
 	SignTx(tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)

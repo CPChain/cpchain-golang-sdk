@@ -11,6 +11,7 @@ import (
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
+	"github.com/CPChain/cpchain-golang-sdk/internal/keystore"
 )
 
 type Account struct {
@@ -34,7 +35,7 @@ func (a *Account) Addr() common.Address {
 	return a.Address
 }
 
-func (a *Account) GetKey(password string) (*Key, error) {
+func (a *Account) GetKey(password string) (*keystore.Key, error) {
 	// Load the key from the keystore and decrypt its contents
 	keyjson, err := ioutil.ReadFile(a.URL.Path)
 	if err != nil {
@@ -94,7 +95,7 @@ func ReadAccount(path string) (*Account, error) {
 	}
 }
 
-func GetKey(path string, account common.Address, password string) (*Key, error) {
+func GetKey(path string, account common.Address, password string) (*keystore.Key, error) {
 	// Load the key from the keystore and decrypt its contents
 	keyjson, err := ioutil.ReadFile(path)
 	if err != nil {

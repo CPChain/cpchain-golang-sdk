@@ -13,54 +13,28 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
+	"github.com/CPChain/cpchain-golang-sdk/internal/keystore"
 	"github.com/zgljl2012/slog"
 )
 
 type WalletInstance struct {
-	account Account
-	backend bind.ContractBackend
-	key     *Key
-	network Network //TODO 只是为了获取chainid
+	account Account              // address and url
+	backend bind.ContractBackend // client
+	key     *keystore.Key        // store key
+	network Network              //TODO 只是为了获取chainid
 }
 
+// return the address of wallet
 func (w *WalletInstance) Addr() common.Address {
 	return w.account.Address
 }
 
-func (w *WalletInstance) Key() *Key {
+// return the key of wallet
+func (w *WalletInstance) Key() *keystore.Key {
 	return w.key
 }
 
-// func (w *WalletInstance) GetKey(password string) (*Key, error) {
-// 	// Load the key from the keystore and decrypt its contents
-// 	keyjson, err := ioutil.ReadFile(w.account.URL.Path)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	key, err := DecryptKey(keyjson, password)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	// Make sure we're really operating on the requested key (no swap attacks)
-// 	if key.Address != w.account.Address {
-// 		return nil, fmt.Errorf("key content mismatch: have account %x, want %x", key.Address, w.account.Address)
-// 	}
-// 	return key, nil
-// }
-
-// func (w *WalletInstance) SignTxWithPassword(password string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
-// 	key, err := w.GetKey(password)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	privateKey := key.PrivateKey
-// 	signTx, err := types.SignTx(tx, types.NewCep1Signer(chainID), privateKey)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return signTx, nil
-// }
-
+// sign transaction with tx and chainid
 func (w *WalletInstance) SignTx(tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
 	privateKey := w.key.PrivateKey
 	signTx, err := types.SignTx(tx, types.NewCep1Signer(chainID), privateKey)
@@ -74,6 +48,7 @@ const (
 	Cpc = 1e18
 )
 
+// transfer to target address, if success, return the signtx
 func (w *WalletInstance) Transfer(targetAddr string, value int64) (*types.Transaction, error) {
 	fromAddr := w.Addr()
 

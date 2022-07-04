@@ -13,6 +13,7 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/ecies"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/crypto/randentropy"
+	"github.com/CPChain/cpchain-golang-sdk/internal/keystore"
 	"github.com/pborman/uuid"
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/scrypt"
@@ -71,7 +72,7 @@ type cipherparamsJSON struct {
 	IV string `json:"iv"`
 }
 
-func EncryptKey(key *Key, auth string, scryptN, scryptP int) ([]byte, error) {
+func EncryptKey(key *keystore.Key, auth string, scryptN, scryptP int) ([]byte, error) {
 	authArray := []byte(auth)
 	salt := randentropy.GetEntropyCSPRNG(32)
 	derivedKey, err := scrypt.Key(authArray, salt, scryptN, scryptR, scryptP, scryptDKLen)
@@ -120,7 +121,7 @@ func EncryptKey(key *Key, auth string, scryptN, scryptP int) ([]byte, error) {
 	return json.Marshal(encryptedKeyJSONV3)
 }
 
-func DecryptKey(keyjson []byte, auth string) (*Key, error) {
+func DecryptKey(keyjson []byte, auth string) (*keystore.Key, error) {
 	// Parse the json into a simple map to fetch the key version
 	m := make(map[string]interface{})
 	if err := json.Unmarshal(keyjson, &m); err != nil {
@@ -152,7 +153,7 @@ func DecryptKey(keyjson []byte, auth string) (*Key, error) {
 
 	eciesPrivateKey := ecies.ImportECDSA(key)
 
-	return &Key{
+	return &keystore.Key{
 		Id:              uuid.UUID(keyId),
 		Address:         crypto.PubkeyToAddress(key.PublicKey),
 		PrivateKey:      key,

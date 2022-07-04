@@ -14,6 +14,7 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
+	"github.com/CPChain/cpchain-golang-sdk/internal/keystore"
 )
 
 type cpchain struct {
@@ -124,11 +125,11 @@ func (c *cpchain) CreateAccount(path string, password string) (*Account, error) 
 	if err != nil {
 		return nil, err
 	}
-	key, err := newKey(rand.Reader)
+	key, err := keystore.NewKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
-	acct := Account{Address: key.Address, URL: URL{Scheme: KeyStoreScheme, Path: filepath.Join(pathabs, keyFileName(key.Address))}}
+	acct := Account{Address: key.Address, URL: URL{Scheme: KeyStoreScheme, Path: filepath.Join(pathabs, keystore.KeyFileName(key.Address))}}
 	if err = StoreKey(key, acct, password); err != nil {
 		return nil, err
 	}
@@ -165,12 +166,12 @@ func (c *cpchain) DeployContract(abi string, bin string, w Wallet) (common.Addre
 	return address, tx, nil
 }
 
-func StoreKey(key *Key, acct Account, password string) error { //TODO 是否应该写入接口内
+func StoreKey(key *keystore.Key, acct Account, password string) error { //TODO 是否应该写入接口内
 	keyjson, err := EncryptKey(key, password, 2, 1)
 	if err != nil {
 		return err
 	}
-	return writeKeyFile(acct.URL.Path, keyjson)
+	return keystore.WriteKeyFile(acct.URL.Path, keyjson)
 }
 
 type contractInternal struct {
@@ -219,7 +220,6 @@ func (c *contractInternal) CallFunction(w Wallet, chainId uint, method string, p
 func (c *contractInternal) View(address common.Address, result interface{}, method string, params ...interface{}) error {
 	callOpts := NewCallOpt(address)
 	err := c.contractIns.Call(callOpts, result, method, params...)
-	fmt.Println("---", result)
 	return err
 }
 
