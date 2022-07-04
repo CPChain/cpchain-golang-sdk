@@ -167,7 +167,7 @@ func (c *cpchain) DeployContract(abi string, bin string, w Wallet) (common.Addre
 }
 
 func StoreKey(key *keystore.Key, acct Account, password string) error { //TODO 是否应该写入接口内
-	keyjson, err := EncryptKey(key, password, 2, 1)
+	keyjson, err := keystore.EncryptKey(key, password, 2, 1)
 	if err != nil {
 		return err
 	}

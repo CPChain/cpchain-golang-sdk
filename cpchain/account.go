@@ -41,7 +41,7 @@ func (a *Account) GetKey(password string) (*keystore.Key, error) {
 	if err != nil {
 		return nil, err
 	}
-	key, err := DecryptKey(keyjson, password)
+	key, err := keystore.DecryptKey(keyjson, password)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func GetKey(path string, account common.Address, password string) (*keystore.Key
 	if err != nil {
 		return nil, err
 	}
-	key, err := DecryptKey(keyjson, password)
+	key, err := keystore.DecryptKey(keyjson, password)
 	if err != nil {
 		return nil, err
 	}

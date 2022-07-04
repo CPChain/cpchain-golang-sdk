@@ -1,4 +1,4 @@
-package cpchain
+package keystore
 
 import (
 	"errors"
