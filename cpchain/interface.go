@@ -41,9 +41,10 @@ type Contract interface {
 	// TODO 如果事件非常多，如10000条事件，是否会分批获取？
 	Events(eventName string, event interface{}, options ...WithEventsOptionsOption) ([]*contract.Event, error)
 
-	CallFunction(w Wallet, chainId uint, method string, params ...interface{}) (*types.Transaction, error)
+	// call function, need to send transation
+	Call(w Wallet, chainId uint, method string, params ...interface{}) (*types.Transaction, error)
 
-	View(address common.Address, result interface{}, method string, params ...interface{}) error
+	View(result interface{}, method string, params ...interface{}) error
 }
 
 type CPChain interface {
@@ -62,6 +63,8 @@ type CPChain interface {
 	DeployContractByFile(path string, w Wallet) (common.Address, *types.Transaction, error)
 	// 通过abi和bin部署合约
 	DeployContract(abi string, bin string, w Wallet) (common.Address, *types.Transaction, error)
+	// 通过签名过的交易获取结果
+	ReceiptByTx(signedTx *types.Transaction) (*types.Receipt, error)
 }
 
 // TODO simulate chain

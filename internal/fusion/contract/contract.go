@@ -223,7 +223,6 @@ func (c *contract) Call(opts *bind.CallOpts, result interface{}, method string, 
 	if err != nil {
 		return err
 	}
-	fmt.Println("code", code)
 	return c.abi.Unpack(result, method, output)
 }
 
@@ -305,36 +304,6 @@ func (c *contract) transact(chainId uint, opts *bind.TransactOpts, contract *com
 	}
 	return signedTx, nil
 }
-
-// func (c *contract) Depoly(opts *bind.TransactOpts, bytecode []byte, chainId uint, params ...interface{}) (common.Address, *types.Transaction, *contract, error) { //TODO返回值*contract待定
-// 	input, err := c.abi.Pack("", params...)
-// 	if err != nil {
-// 		return common.Address{}, nil, nil, err
-// 	}
-// 	tx, err := c.transact(chainId, opts, nil, append(bytecode, input...))
-// 	if err != nil {
-// 		return common.Address{}, nil, nil, err
-// 	}
-// 	c.address = crypto.CreateAddress(opts.From, tx.Nonce())
-// 	return c.address, tx, c, nil
-// }
-
-// func DeployContract(abiData string, opts *bind.TransactOpts, bytecode []byte, backend bind.ContractBackend, chainId uint, params ...interface{}) (common.Address, *types.Transaction, *contract, error) {
-// 	c, err := NewBoundContract(abiData, common.Address{}, backend)
-// 	if err != nil {
-// 		return common.Address{}, nil, nil, err
-// 	}
-// 	input, err := c.abi.Pack("", params...)
-// 	if err != nil {
-// 		return common.Address{}, nil, nil, err
-// 	}
-// 	tx, err := c.transact(chainId, opts, nil, append(bytecode, input...))
-// 	if err != nil {
-// 		return common.Address{}, nil, nil, err
-// 	}
-// 	c.address = crypto.CreateAddress(opts.From, tx.Nonce())
-// 	return c.address, tx, c, nil
-// }
 
 // ensureContext is a helper method to ensure a context is not nil, even if the
 // user specified it as such.

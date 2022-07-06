@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	// "io/ioutil"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 	"github.com/CPChain/cpchain-golang-sdk/tools"
 	"github.com/urfave/cli"
 	"github.com/zgljl2012/slog"
@@ -58,9 +58,18 @@ func main() {
 				return nil
 			}
 			tx, err := wallet.Transfer(targetAddr, value)
-			time.Sleep(8 * time.Second)
 			fmt.Printf("Tx hash: %v", tx.Hash().Hex())
-			fmt.Println("tranfer!")
+			receipt, err := clientOnTestnet.ReceiptByTx(tx)
+			if err != nil {
+				slog.Fatal(err)
+			}
+			if receipt.Status == types.ReceiptStatusSuccessful {
+				fmt.Println("confirm transaction success")
+				fmt.Println(receipt)
+			} else {
+				fmt.Println("confirm transaction failed", "status", receipt.Status,
+					"receipt.TxHash", receipt.TxHash)
+			}
 			return err
 		},
 	}

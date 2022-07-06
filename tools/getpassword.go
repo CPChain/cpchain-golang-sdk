@@ -13,7 +13,7 @@ func GetPassword(prompt string, needConfirm bool) (string, error) {
 	if prompt != "" {
 		color.HiGreen.Println(prompt)
 	}
-	passwordByte, err := gopass.GetPasswdPrompt("Password: ", true, os.Stdin, os.Stdout)
+	passwordByte, err := gopass.GetPasswdPrompt("Password: ", false, os.Stdin, os.Stdout)
 	password := string(passwordByte)
 	if err != nil {
 		color.HiRed.Printf("ERROR: Failed to read password: %v", err)

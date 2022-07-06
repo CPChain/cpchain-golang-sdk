@@ -2,7 +2,6 @@ package cpchain_test
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -12,6 +11,8 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
 	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 )
 
 func TestGetBlockNumber(t *testing.T) {
@@ -165,7 +166,6 @@ var (
 )
 
 func TestContractTransact(t *testing.T) {
-	// number = abi.U256(big.NewInt(4))
 	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
 	if err != nil {
 		t.Fatal(err)
@@ -179,12 +179,22 @@ func TestContractTransact(t *testing.T) {
 		t.Fatal(err)
 	}
 	contracthello := client.Contract([]byte(Abi), helloaddress)
-	tx, err := contracthello.CallFunction(wallet, 41, "helloToEveryOne")
+	tx, err := contracthello.Call(wallet, 41, "helloToEveryOne")
 	if err != nil {
-		fmt.Println("----1")
 		t.Fatal(err)
 	}
 	t.Logf("tx hash: %v", tx.Hash().Hex())
+	receipt, err := client.ReceiptByTx(tx)
+
+	if err != nil {
+		t.Fatalf("failed to waitMined tx:%v", err)
+	}
+	if receipt.Status == types.ReceiptStatusSuccessful {
+		t.Log("confirm transaction success")
+	} else {
+		t.Error("confirm transaction failed", "status", receipt.Status,
+			"receipt.TxHash", receipt.TxHash)
+	}
 }
 
 func TestU256(t *testing.T) {
@@ -231,15 +241,11 @@ func TestContractView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wallet, err := client.LoadWallet(keystorePath, password)
-	if err != nil {
-		t.Fatal(err)
-	}
 	contracthello := client.Contract([]byte(Abi), helloaddress)
 
 	var hellotime = big.NewInt(0)
 	// var hellotime *types.Receipt
-	err = contracthello.View(wallet.Addr(), &hellotime, "hellotime")
+	err = contracthello.View(&hellotime, "hellotime")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,16 +255,11 @@ func TestContractView(t *testing.T) {
 	}
 }
 
-func TestGetCode(t *testing.T) {
-	// clientOnTestnet, err := cpchain.NewCPChain(cpchain.Testnet)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	client, err := cpcclient.Dial(endpoint)
+func TestReceiptByTx(t *testing.T) {
+	client, err := cpcclient.Dial(cpchain.Testnet.JsonRpcUrl)
+	rep, err := client.TransactionReceipt(context.Background(), common.HexToHash("0xa0aa285751bc0a1a9885705f1f24fd3ce2398b7a2377b952b78138d97741eaea"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	// blocknumber, err := clientOnTestnet.BlockNumber()
-	result, err := client.CodeAt(context.Background(), cpchain.HexToAddress(helloaddress), nil)
-	fmt.Println(hex.EncodeToString(result))
+	fmt.Println(rep)
 }

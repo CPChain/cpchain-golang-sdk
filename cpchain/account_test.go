@@ -8,7 +8,6 @@ import (
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
 	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 )
@@ -66,6 +65,11 @@ func TestGetNonce(t *testing.T) {
 	t.Log("nonce:", nonce)
 }
 
+// ---- {"jsonrpc":"2.0","id":18,"result":{"blockHash":"0x7911ada70ca3187c5c63383e42f751f4941875d8715c464872d59cae33e244b7","blockNumber":"0x250aaa","contractAddress":null,"cumulativeGasUsed":"0x6d17","from":"0xfd15c2932a60631222f7e6ffdde7bdab7237c2dc","gasUsed":"0x6d17","logs":[{"address":"0xfd44a7aefadfa872ade30ebe152fc37e6977fe70","topics":["0x845d757b1759e3b909865aad71e093a4c4649a414515ee96c3ebb2d0bd18ed73"],"data":"0x0000000000000000000000000000000000000000000000000000000000000012","blockNumber":"0x250aaa","transactionHash":"0xbcd09ead48f7db0f9485cc1b6a7b6afb6d8a8dc72ea02d903d7aec90048344c2","transactionIndex":"0x0","blockHash":"0x7911ada70ca3187c5c63383e42f751f4941875d8715c464872d59cae33e244b7","logIndex":"0x0","removed":false}],"logsBloom":"0x000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000
+// 00000004000000000000000000000020000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":"0x1","to":"0xfd44a7aefadfa872ade30ebe152fc37e6977fe70","transactionHash":"0xbcd09ead48f7db0f9485cc1b6a7b6afb6d8a8dc72ea02d903d7aec90048344c2","transactionIndex":"0x0"}}
+// ----+++++ {"blockHash":"0x7911ada70ca3187c5c63383e42f751f4941875d8715c464872d59cae33e244b7","blockNumber":"0x250aaa","contractAddress":null,"cumulativeGasUsed":"0x6d17","from":"0xfd15c2932a60631222f7e6ffdde7bdab7237c2dc","gasUsed":"0x6d17","logs":[{"address":"0xfd44a7aefadfa872ade30ebe152fc37e6977fe70","topics":["0x845d757b1759e3b909865aad71e093a4c4649a414515ee96c3ebb2d0bd18ed73"],"data":"0x0000000000000000000000000000000000000000000000000000000000000012","blockNumber":"0x250aaa","transactionHash":"0xbcd09ead48f7db0f9485cc1b6a7b6afb6d8a8dc72ea02d903d7aec90048344c2","transactionIndex":"0x0","blockHash":"0x7911ada70ca3187c5c63383e42f751f4941875d8715c464872d59cae33e244b7","logIndex":"0x0","removed":false}],"logsBloom":"0x00000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000004000000000000000000000
+// 020000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","status":"0x1","to":"0xfd44a7aefadfa872ade30ebe152fc37e6977fe70","transactionHash":"0xbcd09ead48f7db0f9485cc1b6a7b6afb6d8a8dc72ea02d903d7aec90048344c2","transactionIndex":"0x0"}
+
 func TestSignTx(t *testing.T) {
 	clientOnTestnet, err := cpchain.NewCPChain(cpchain.Testnet)
 	if err != nil {
@@ -118,7 +122,8 @@ func TestSignTx(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println(signedTx.Hash().Hex())
-	receipt, err := bind.WaitMined(context.Background(), client, signedTx)
+	// receipt, err := bind.WaitMined(context.Background(), client, signedTx)
+	receipt, err := clientOnTestnet.ReceiptByTx(signedTx)
 
 	if err != nil {
 		t.Fatalf("failed to waitMined tx:%v", err)
@@ -129,7 +134,6 @@ func TestSignTx(t *testing.T) {
 		t.Error("confirm transaction failed", "status", receipt.Status,
 			"receipt.TxHash", receipt.TxHash)
 	}
-
 }
 
 // test receipt by txhash
