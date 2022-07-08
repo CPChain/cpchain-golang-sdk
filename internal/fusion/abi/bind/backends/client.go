@@ -14,13 +14,28 @@ import (
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 )
 
+// type clientBackend struct {
+// 	provider fusion.Provider
+// }
 type clientBackend struct {
 	provider fusion.Provider
+	client   cpcclient.Client
 }
 
-func NewClientBackend(provider fusion.Provider) bind.ContractBackend {
+// func NewClientBackend(provider fusion.Provider) bind.ContractBackend {
+// 	return &clientBackend{
+// 		provider: provider,
+// 	}
+// }
+
+func NewClientBackend(provider fusion.Provider, endpoint string) bind.ContractBackend {
+	client, err := cpcclient.Dial(endpoint)
+	if err != nil {
+		return nil
+	}
 	return &clientBackend{
 		provider: provider,
+		client:   *client,
 	}
 }
 
@@ -87,33 +102,48 @@ func (c *clientBackend) FilterLogs(ctx context.Context, query types.FilterQuery)
 
 // TODO 以后将clientbackend 替换掉cpcclient
 func (c *clientBackend) PendingNonceAt(ctx context.Context, account common.Address) (uint64, error) {
-
-	return uint64(0), nil
+	result, err := c.client.PendingNonceAt(ctx, account)
+	return result, err
 }
 
 func (c *clientBackend) PendingCodeAt(ctx context.Context, account common.Address) ([]byte, error) {
+	result, err := c.client.PendingCodeAt(ctx, account)
+	return result, err
+}
 
-	return nil, nil
+func (c *clientBackend) PendingCallContract(ctx context.Context, msg cpcclient.CallMsg) ([]byte, error) {
+	result, err := c.client.PendingCallContract(ctx, msg)
+	return result, err
 }
 
 func (c *clientBackend) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
-	return nil, nil
+	result, err := c.client.SuggestGasPrice(ctx)
+	return result, err
 }
 
 func (c *clientBackend) EstimateGas(ctx context.Context, msg cpcclient.CallMsg) (uint64, error) {
-	return uint64(0), nil
+	result, err := c.client.EstimateGas(ctx, msg)
+	return result, err
 }
 
 func (c *clientBackend) SendTransaction(ctx context.Context, tx *types.Transaction) error {
-	return nil
+	err := c.client.SendTransaction(ctx, tx)
+	return err
 }
 
 func (c *clientBackend) CodeAt(ctx context.Context, contract common.Address, blockNumber *big.Int) ([]byte, error) {
-	return nil, nil
+	result, err := c.client.CodeAt(ctx, contract, blockNumber)
+	return result, err
 }
 
 // ContractCall executes an cpchain contract call with the specified data as the
 // input.
 func (c *clientBackend) CallContract(ctx context.Context, call cpcclient.CallMsg, blockNumber *big.Int) ([]byte, error) {
-	return nil, nil
+	result, err := c.client.CallContract(ctx, call, blockNumber)
+	return result, err
+}
+
+func (c *clientBackend) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+	result, err := c.client.TransactionReceipt(ctx, txHash)
+	return result, err
 }

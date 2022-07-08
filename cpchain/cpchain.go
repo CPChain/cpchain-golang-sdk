@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"math/big"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/contract"
@@ -74,22 +77,49 @@ func (c *cpchain) BalanceOf(address string) *big.Int {
 	return balance
 }
 
+// Get nonce of account
+func (c *cpchain) NonceOf(address string) ([]byte, error) {
+	backend, err := cpcclient.Dial(c.network.JsonRpcUrl)
+	if err != nil {
+		return nil, err
+	}
+	nonce, err := backend.PendingCodeAt(context.Background(), HexToAddress(address))
+	if err != nil {
+		return nil, err
+	}
+	return nonce, nil
+}
+
+// Get gas price
+func (c *cpchain) GasPrice() (*big.Int, error) {
+	backend, err := cpcclient.Dial(c.network.JsonRpcUrl)
+	if err != nil {
+		return nil, err
+	}
+	gasprice, err := backend.SuggestGasPrice(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return gasprice, nil
+}
+
 func WeiToCpc(wei *big.Int) *big.Int {
 	return wei.Div(wei, big.NewInt(1e18))
 }
 
 // create a contract instance
 func (c *cpchain) Contract(abi []byte, address string) Contract {
-	// contractIns, err := contract.NewContractWithProvider(
-	// 	[]byte(abi),
-	// 	common.HexToAddress(address),
-	// 	c.provider,
-	// )
-	contractIns, err := contract.NewContractWithUrl(
+	contractIns, err := contract.NewContractWithProvider(
 		[]byte(abi),
 		common.HexToAddress(address),
+		c.provider,
 		c.network.JsonRpcUrl,
 	)
+	// contractIns, err := contract.NewContractWithUrl(
+	// 	[]byte(abi),
+	// 	common.HexToAddress(address),
+	// 	c.network.JsonRpcUrl,
+	// )
 	if err != nil {
 		return nil //TODO 错误处理
 	}
@@ -212,10 +242,11 @@ func (c *contractInternal) Events(eventName string, event interface{}, options .
 	return events, nil
 }
 
-func (c *contractInternal) Call(w Wallet, chainId uint, method string, params ...interface{}) (*types.Transaction, error) {
+// Call contract function
+func (c *contractInternal) Call(w Wallet, chainId uint, method string, params ...string) (*types.Transaction, error) {
 	key := w.Key()
-	backend, err := cpcclient.Dial(Testnet.JsonRpcUrl) //TODO
-	// Key, err := w.GetKey(w)
+	backend, err := cpcclient.Dial(Testnet.JsonRpcUrl) //TODO !!!!
+
 	if err != nil {
 		return nil, err
 	}
@@ -234,10 +265,11 @@ func (c *contractInternal) Call(w Wallet, chainId uint, method string, params ..
 	return tx, err
 }
 
-func (c *contractInternal) View(result interface{}, method string, params ...interface{}) error {
+// Contract View, return a interface{} result, only support one return
+func (c *contractInternal) View(method string, params ...string) (interface{}, error) {
 	callOpts := NewCallOpt()
-	err := c.contractIns.Call(callOpts, result, method, params...)
-	return err
+	r, err := c.contractIns.View(callOpts, method, params...)
+	return r, err
 }
 
 func NewCallOpt() *bind.CallOpts {
@@ -246,4 +278,65 @@ func NewCallOpt() *bind.CallOpts {
 		From:    common.Address{},
 		Context: context.Background(),
 	}
+}
+
+// 把由字符串组成的参数数组转换成由interface{}组成的参数数组
+func ConvertParmas(ABI string, method string, parmas []string) ([]interface{}, error) {
+	c, err := abi.JSON(strings.NewReader(ABI))
+	if err != nil {
+		return nil, err
+	}
+	var convertedParams []interface{}
+	err = c.Methods[method].Inputs.ForEach(func(i int, input abi.Argument) error {
+		t := input.Type.String()
+		switch {
+		case t == "address":
+			convertedParams = append(convertedParams, parmas[i])
+			return nil
+		case t == "uint256":
+			paramsInt64, err := strconv.ParseInt(parmas[i], 10, 64)
+			paramsInt256 := abi.U256(big.NewInt(paramsInt64))
+			convertedParams = append(convertedParams, paramsInt256)
+			return err
+		case t == "string":
+			convertedParams = append(convertedParams, parmas[i])
+			return nil
+		default:
+			return nil
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+	return convertedParams, nil
+}
+
+func ConvertResults(ABI string, method string, parmas []string) ([]interface{}, error) {
+	c, err := abi.JSON(strings.NewReader(ABI))
+	if err != nil {
+		return nil, err
+	}
+	var convertedParams []interface{}
+	err = c.Methods[method].Inputs.ForEach(func(i int, input abi.Argument) error {
+		t := input.Type.String()
+		switch {
+		case t == "address":
+			convertedParams = append(convertedParams, parmas[i])
+			return nil
+		case t == "uint256":
+			paramsInt64, err := strconv.ParseInt(parmas[i], 10, 64)
+			paramsInt256 := abi.U256(big.NewInt(paramsInt64))
+			convertedParams = append(convertedParams, paramsInt256)
+			return err
+		case t == "string":
+			convertedParams = append(convertedParams, parmas[i])
+			return nil
+		default:
+			return nil
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+	return convertedParams, nil
 }

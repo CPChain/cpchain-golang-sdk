@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"strconv"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
@@ -62,7 +63,9 @@ type Contract interface {
 	// Depoly(opts *bind.TransactOpts, bytecode []byte, chainId uint, params ...interface{}) (common.Address, *types.Transaction, *contract, error)
 	Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error
 
-	Transact(opts *bind.TransactOpts, chainId uint, method string, params ...interface{}) (*types.Transaction, error)
+	View(opts *bind.CallOpts, method string, params ...string) (interface{}, error)
+
+	Transact(opts *bind.TransactOpts, chainId uint, method string, params ...string) (*types.Transaction, error)
 }
 
 type contract struct { //NOTE:like boundcontract
@@ -72,8 +75,8 @@ type contract struct { //NOTE:like boundcontract
 }
 
 // Contract
-func NewContractWithProvider(abi []byte, address common.Address, provider fusion.Provider) (Contract, error) {
-	backend := backends.NewClientBackend(provider)
+func NewContractWithProvider(abi []byte, address common.Address, provider fusion.Provider, endpoint string) (Contract, error) {
+	backend := backends.NewClientBackend(provider, endpoint)
 	return NewContract(abi, address, backend)
 }
 
@@ -177,7 +180,63 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 	return events, nil
 }
 
-// view
+// 自动生成对应类型的result interface{} 来接收返回值
+func (c *contract) View(opts *bind.CallOpts, method string, params ...string) (interface{}, error) {
+	var result interface{} //TODO 复用
+	if err := c.abi.Methods[method].Outputs.ForEach(func(i int, outputs abi.Argument) error {
+		if outputs.Type.String() == "address" {
+			result = common.Address{}
+		} else if outputs.Type.String() == "uint256" {
+			result = big.NewInt(0)
+		} else if outputs.Type.String() == "string" {
+			result = string("")
+		} else if outputs.Type.String() == "bool" {
+			result = bool(true)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	convertedParams, err := c.ConvertParmasType(method, params...)
+	if err != nil {
+		return nil, err
+	}
+	err = c.Call(opts, &result, method, convertedParams...)
+	return result, err
+}
+
+// 将[]string 转换成[]interface{}
+func (c *contract) ConvertParmasType(method string, params ...string) ([]interface{}, error) {
+	var convertedParams []interface{}
+	if err := c.abi.Methods[method].Inputs.ForEach(func(i int, inputs abi.Argument) error {
+		if inputs.Type.String() == "address" {
+			convertedParams = append(convertedParams, common.HexToAddress(params[0]))
+		} else if inputs.Type.String() == "uint256" {
+			paramsInt64, err := strconv.ParseInt(params[i], 10, 64)
+			if err != nil {
+				return err
+			}
+			paramsInt256 := abi.U256(big.NewInt(paramsInt64))
+			convertedParams = append(convertedParams, paramsInt256)
+		} else if inputs.Type.String() == "string" {
+			convertedParams = append(convertedParams, params[i])
+		} else if inputs.Type.String() == "bool" {
+			if params[i] == "true" {
+				convertedParams = append(convertedParams, true)
+			} else if params[i] == "false" {
+				convertedParams = append(convertedParams, false)
+			} else {
+				return errors.New("bool only recepit true or false")
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return convertedParams, nil
+}
+
+// View
 func (c *contract) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
 	// Don't crash on a lazy user
 	if opts == nil {
@@ -227,9 +286,13 @@ func (c *contract) Call(opts *bind.CallOpts, result interface{}, method string, 
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (c *contract) Transact(opts *bind.TransactOpts, chainId uint, method string, params ...interface{}) (*types.Transaction, error) {
+func (c *contract) Transact(opts *bind.TransactOpts, chainId uint, method string, params ...string) (*types.Transaction, error) {
+	convertedParams, err := c.ConvertParmasType(method, params...)
+	if err != nil {
+		return nil, err
+	}
 	// Otherwise pack up the parameters and invoke the contract
-	input, err := c.abi.Pack(method, params...)
+	input, err := c.abi.Pack(method, convertedParams...)
 	if err != nil {
 		return nil, err
 	}
@@ -237,8 +300,8 @@ func (c *contract) Transact(opts *bind.TransactOpts, chainId uint, method string
 }
 
 //TODO chainID
-// transact executes an actual transaction invocation, first deriving any missing
-// authorization fields, and then scheduling the transaction for execution.
+// Transact executes an actual transaction invocation, first deriving any missing
+// Authorization fields, and then scheduling the transaction for execution.
 func (c *contract) transact(chainId uint, opts *bind.TransactOpts, contract *common.Address, input []byte) (*types.Transaction, error) {
 	var err error
 	// Ensure a valid value field and resolve the account nonce

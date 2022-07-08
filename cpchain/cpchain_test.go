@@ -179,7 +179,44 @@ func TestContractTransact(t *testing.T) {
 		t.Fatal(err)
 	}
 	contracthello := client.Contract([]byte(Abi), helloaddress)
-	tx, err := contracthello.Call(wallet, 41, "helloToEveryOne")
+
+	// ABI,err := abi.JSON(strings.NewReader(Abi))
+
+	tx, err := contracthello.Call(wallet, 41, "helloToSomeOne", targetAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("tx hash: %v", tx.Hash().Hex())
+	receipt, err := client.ReceiptByTx(tx)
+
+	if err != nil {
+		t.Fatalf("failed to waitMined tx:%v", err)
+	}
+	if receipt.Status == types.ReceiptStatusSuccessful {
+		t.Log("confirm transaction success")
+	} else {
+		t.Error("confirm transaction failed", "status", receipt.Status,
+			"receipt.TxHash", receipt.TxHash)
+	}
+}
+
+// test convert params
+func TestContractTransactConvert(t *testing.T) {
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contracthello := client.Contract([]byte(Abi), helloaddress)
+
+	tx, err := contracthello.Call(wallet, 41, "helloToSomeOne", targetAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -242,15 +279,13 @@ func TestContractView(t *testing.T) {
 		t.Fatal(err)
 	}
 	contracthello := client.Contract([]byte(Abi), helloaddress)
-
-	var hellotime = big.NewInt(0)
 	// var hellotime *types.Receipt
-	err = contracthello.View(&hellotime, "hellotime")
+	result, err := contracthello.View("hellotime")
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(hellotime)
-	if hellotime == nil || hellotime.Uint64() == 0 {
+	fmt.Println(result)
+	if result == nil {
 		t.Error("error")
 	}
 }

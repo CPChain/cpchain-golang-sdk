@@ -41,16 +41,22 @@ type Contract interface {
 	// TODO 如果事件非常多，如10000条事件，是否会分批获取？
 	Events(eventName string, event interface{}, options ...WithEventsOptionsOption) ([]*contract.Event, error)
 
-	// call function, need to send transation
-	Call(w Wallet, chainId uint, method string, params ...interface{}) (*types.Transaction, error)
+	// Call function, need to send transation
+	Call(w Wallet, chainId uint, method string, params ...string) (*types.Transaction, error)
 
-	View(result interface{}, method string, params ...interface{}) error
+	// View
+	View(method string, params ...string) (interface{}, error)
 }
 
 type CPChain interface {
 	// Get the current block number
 	BlockNumber() (uint64, error)
+	//
 	Block(number int) (*fusion.FullBlock, error)
+	// Get nonce of account
+	NonceOf(address string) ([]byte, error)
+	// Get gas price
+	GasPrice() (*big.Int, error)
 	// Get balance
 	BalanceOf(address string) *big.Int
 	// New Contract instance
