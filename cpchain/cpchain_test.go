@@ -1,11 +1,18 @@
 package cpchain_test
 
 import (
+	"context"
+	"fmt"
 	"io/ioutil"
 	"math/big"
+	"os"
 	"testing"
 
 	"github.com/CPChain/cpchain-golang-sdk/cpchain"
+	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
 )
 
 func TestGetBlockNumber(t *testing.T) {
@@ -77,4 +84,217 @@ func TestEvents(t *testing.T) {
 			t.Fatal("event name is error")
 		}
 	}
+}
+
+func TestCreateAccount(t *testing.T) {
+	password := "123456"
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path, err := ioutil.TempDir(os.TempDir(), "keystore")
+	if err != nil {
+		t.Fatal(err)
+	}
+	a, err := client.CreateAccount(path, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w, err := client.LoadWallet(a.URL.Path, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := w.Key()
+	if key.Address != a.Address {
+		t.Fatal("account error")
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.RemoveAll(path)
+}
+
+const Abi = "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]"
+
+const Bin = `0x6080604052348015600f57600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550603f80605d6000396000f3fe6080604052600080fdfea2646970667358221220cc46356d887799b33b3ca82fcf610da45d06ecf8fa0e763740abfbd51f6898ff64736f6c634300080a0033`
+
+func TestReadContract(t *testing.T) {
+	abi, bin, err := cpchain.ReadContract(cfpath)
+	t.Log(abi)
+	t.Log(Abi)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if abi != Abi {
+		t.Fatal("abi! = Abi")
+	}
+	if bin != Bin {
+		t.Fatal("bin != Bin")
+	}
+}
+
+func TestContractDeploy(t *testing.T) {
+	abi, bin, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	address, tx, err := client.DeployContract(abi, bin, wallet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("address:%v", address.Hex())
+	t.Logf("Tx hash: %v", tx.Hash().Hex())
+}
+
+// const helloaddress = "0x63c7AdaA9EEf9f89cbB8960AFAdca50782d259f4"
+// const helloaddress = "0x9865Cb52E790e30E115a435d23683e2078a3ABB7"
+const helloaddress = "0xfD44A7aEFaDfa872Ade30EBE152Fc37E6977fe70"
+
+// 0x63c7AdaA9EEf9f89cbB8960AFAdca50782d259f4
+var number []byte
+
+var (
+	Address, _ = abi.NewType("address")
+)
+
+func TestContractTransact(t *testing.T) {
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contracthello := client.Contract([]byte(Abi), helloaddress)
+
+	// ABI,err := abi.JSON(strings.NewReader(Abi))
+
+	tx, err := contracthello.Call(wallet, 41, "helloToSomeOne", targetAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("tx hash: %v", tx.Hash().Hex())
+	receipt, err := client.ReceiptByTx(tx)
+
+	if err != nil {
+		t.Fatalf("failed to waitMined tx:%v", err)
+	}
+	if receipt.Status == types.ReceiptStatusSuccessful {
+		t.Log("confirm transaction success")
+	} else {
+		t.Error("confirm transaction failed", "status", receipt.Status,
+			"receipt.TxHash", receipt.TxHash)
+	}
+}
+
+// test convert params
+func TestContractTransactConvert(t *testing.T) {
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contracthello := client.Contract([]byte(Abi), helloaddress)
+
+	tx, err := contracthello.Call(wallet, 41, "helloToSomeOne", targetAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("tx hash: %v", tx.Hash().Hex())
+	receipt, err := client.ReceiptByTx(tx)
+
+	if err != nil {
+		t.Fatalf("failed to waitMined tx:%v", err)
+	}
+	if receipt.Status == types.ReceiptStatusSuccessful {
+		t.Log("confirm transaction success")
+	} else {
+		t.Error("confirm transaction failed", "status", receipt.Status,
+			"receipt.TxHash", receipt.TxHash)
+	}
+}
+
+func TestU256(t *testing.T) {
+	number = abi.U256(big.NewInt(4))
+	fmt.Printf("value: %d\n", number)
+	fmt.Printf("number of bytes: %d", len(number))
+}
+
+type HelloToSomeOne struct {
+	Target cpchain.Address `json:"target"`
+}
+
+func TestContractEvent(t *testing.T) {
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contracthello := client.Contract([]byte(Abi), helloaddress)
+	events, err := contracthello.Events("HelloToSomeOne", HelloToSomeOne{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Count:", len(events))
+	for _, e := range events {
+		args := e.Data.(*HelloToSomeOne)
+		t.Log(e.BlockNumber, args.Target.Hex())
+		// check event name
+		if e.Name != "HelloToSomeOne" {
+			t.Fatal("event name is error")
+		}
+	}
+}
+
+func TestContractView(t *testing.T) {
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contracthello := client.Contract([]byte(Abi), helloaddress)
+	// var hellotime *types.Receipt
+	result, err := contracthello.View("hellotime")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(result)
+	if result == nil {
+		t.Error("error")
+	}
+}
+
+func TestReceiptByTx(t *testing.T) {
+	client, err := cpcclient.Dial(cpchain.Testnet.JsonRpcUrl)
+	rep, err := client.TransactionReceipt(context.Background(), common.HexToHash("0xa0aa285751bc0a1a9885705f1f24fd3ce2398b7a2377b952b78138d97741eaea"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(rep)
 }

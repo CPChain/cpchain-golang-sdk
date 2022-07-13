@@ -3,16 +3,34 @@ package contract
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
+	"strconv"
 
+	"github.com/CPChain/cpchain-golang-sdk/internal/cpcclient"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/abi/bind/backends"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common"
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/types"
+)
+
+var (
+	// ErrNoCode is returned by call and transact operations for which the requested
+	// recipient contract to operate on does not exist in the state db or does not
+	// have any code associated with it (i.e. suicided).
+	ErrNoCode = errors.New("no contract code at given address")
+
+	// This error is raised when attempting to perform a pending state action
+	// on a backend that doesn't implement PendingContractCaller.
+	ErrNoPendingState = errors.New("backend does not support pending state")
+
+	// This error is returned by WaitDeployed if contract creation leaves an
+	// empty contract behind.
+	ErrNoCodeAfterDeploy = errors.New("no contract code after deployment")
 )
 
 type FilterLogsOptions struct {
@@ -42,17 +60,31 @@ type Event struct {
 
 type Contract interface {
 	FilterLogs(eventName string, event interface{}, options ...WithFilterLogsOption) ([]*Event, error) // event parameter is a event struct, e.g. CreateProduct{}
+	// Depoly(opts *bind.TransactOpts, bytecode []byte, chainId uint, params ...interface{}) (common.Address, *types.Transaction, *contract, error)
+	Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error
+
+	View(opts *bind.CallOpts, method string, params ...string) (interface{}, error)
+
+	Transact(opts *bind.TransactOpts, chainId uint, method string, params ...string) (*types.Transaction, error)
 }
 
-type contract struct {
+type contract struct { //NOTE:like boundcontract
 	abi     abi.ABI
 	address common.Address
 	backend bind.ContractBackend
 }
 
 // Contract
-func NewContractWithProvider(abi []byte, address common.Address, provider fusion.Provider) (Contract, error) {
-	backend := backends.NewClientBackend(provider)
+func NewContractWithProvider(abi []byte, address common.Address, provider fusion.Provider, endpoint string) (Contract, error) {
+	backend := backends.NewClientBackend(provider, endpoint)
+	return NewContract(abi, address, backend)
+}
+
+func NewContractWithUrl(abi []byte, address common.Address, url string) (Contract, error) {
+	backend, err := cpcclient.Dial(url)
+	if err != nil {
+		return nil, err
+	}
 	return NewContract(abi, address, backend)
 }
 
@@ -146,4 +178,201 @@ func (c *contract) FilterLogs(eventName string, event interface{}, options ...Wi
 		})
 	}
 	return events, nil
+}
+
+// 自动生成对应类型的result interface{} 来接收返回值
+func (c *contract) View(opts *bind.CallOpts, method string, params ...string) (interface{}, error) {
+	var result interface{} //TODO 复用
+	if err := c.abi.Methods[method].Outputs.ForEach(func(i int, outputs abi.Argument) error {
+		if outputs.Type.String() == "address" {
+			result = common.Address{}
+		} else if outputs.Type.String() == "uint256" {
+			result = big.NewInt(0)
+		} else if outputs.Type.String() == "string" {
+			result = string("")
+		} else if outputs.Type.String() == "bool" {
+			result = bool(true)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	convertedParams, err := c.ConvertParmasType(method, params...)
+	if err != nil {
+		return nil, err
+	}
+	err = c.Call(opts, &result, method, convertedParams...)
+	return result, err
+}
+
+// 将[]string 转换成[]interface{}
+func (c *contract) ConvertParmasType(method string, params ...string) ([]interface{}, error) {
+	var convertedParams []interface{}
+	if err := c.abi.Methods[method].Inputs.ForEach(func(i int, inputs abi.Argument) error {
+		if inputs.Type.String() == "address" {
+			convertedParams = append(convertedParams, common.HexToAddress(params[0]))
+		} else if inputs.Type.String() == "uint256" {
+			paramsInt64, err := strconv.ParseInt(params[i], 10, 64)
+			if err != nil {
+				return err
+			}
+			paramsInt256 := abi.U256(big.NewInt(paramsInt64))
+			convertedParams = append(convertedParams, paramsInt256)
+		} else if inputs.Type.String() == "string" {
+			convertedParams = append(convertedParams, params[i])
+		} else if inputs.Type.String() == "bool" {
+			if params[i] == "true" {
+				convertedParams = append(convertedParams, true)
+			} else if params[i] == "false" {
+				convertedParams = append(convertedParams, false)
+			} else {
+				return errors.New("bool only recepit true or false")
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return convertedParams, nil
+}
+
+// View
+func (c *contract) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	// Don't crash on a lazy user
+	if opts == nil {
+		opts = new(bind.CallOpts)
+	}
+	// Pack the input, call and unpack the results
+	input, err := c.abi.Pack(method, params...)
+	if err != nil {
+		return err
+	}
+	var (
+		msg    = cpcclient.CallMsg{From: opts.From, To: &c.address, Data: input}
+		ctx    = ensureContext(opts.Context)
+		code   []byte
+		output []byte
+	)
+	if opts.Pending {
+		pb, ok := c.backend.(bind.PendingContractCaller)
+		if !ok {
+			return ErrNoPendingState
+		}
+		output, err = pb.PendingCallContract(ctx, msg)
+		if err == nil && len(output) == 0 {
+			// Make sure we have a contract to operate on, and bail out otherwise.
+			// NOTE: it may cause some edge case where the pending block doesn't add to chain and the tx which depends on it will eventually fail
+			if code, err = pb.PendingCodeAt(ctx, c.address); err != nil {
+				return err
+			} else if len(code) == 0 {
+				return ErrNoCode
+			}
+		}
+	} else {
+		output, err = c.backend.CallContract(ctx, msg, nil)
+		if err == nil && len(output) == 0 {
+			// Make sure we have a contract to operate on, and bail out otherwise.
+			if code, err = c.backend.CodeAt(ctx, c.address, nil); err != nil {
+				return err
+			} else if len(code) == 0 {
+				return ErrNoCode
+			}
+		}
+	}
+	if err != nil {
+		return err
+	}
+	return c.abi.Unpack(result, method, output)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (c *contract) Transact(opts *bind.TransactOpts, chainId uint, method string, params ...string) (*types.Transaction, error) {
+	convertedParams, err := c.ConvertParmasType(method, params...)
+	if err != nil {
+		return nil, err
+	}
+	// Otherwise pack up the parameters and invoke the contract
+	input, err := c.abi.Pack(method, convertedParams...)
+	if err != nil {
+		return nil, err
+	}
+	return c.transact(chainId, opts, &c.address, input)
+}
+
+//TODO chainID
+// Transact executes an actual transaction invocation, first deriving any missing
+// Authorization fields, and then scheduling the transaction for execution.
+func (c *contract) transact(chainId uint, opts *bind.TransactOpts, contract *common.Address, input []byte) (*types.Transaction, error) {
+	var err error
+	// Ensure a valid value field and resolve the account nonce
+	value := opts.Value
+	if value == nil {
+		value = new(big.Int)
+	}
+	var nonce uint64
+	if opts.Nonce == nil {
+		nonce, err = c.backend.PendingNonceAt(ensureContext(opts.Context), opts.From)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+		}
+	} else {
+		nonce = opts.Nonce.Uint64()
+	}
+	// Figure out the gas allowance and gas price values
+	gasPrice := opts.GasPrice
+	if gasPrice == nil {
+		gasPrice, err = c.backend.SuggestGasPrice(ensureContext(opts.Context))
+		if err != nil {
+			return nil, fmt.Errorf("failed to suggest gas price: %v", err)
+		}
+	}
+	gasLimit := opts.GasLimit
+	if gasLimit == 0 {
+		// Gas estimation cannot succeed without code for method invocations
+		if contract != nil {
+			if code, err := c.backend.PendingCodeAt(ensureContext(opts.Context), c.address); err != nil {
+				return nil, err
+			} else if len(code) == 0 {
+				return nil, ErrNoCode
+			}
+		}
+		// If the contract surely has code (or code is not needed), estimate the transaction
+		msg := cpcclient.CallMsg{From: opts.From, To: contract, Value: value, Data: input}
+		gasLimit, err = c.backend.EstimateGas(ensureContext(opts.Context), msg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to estimate gas needed: %v", err)
+		}
+	}
+	// Create the transaction, sign it and schedule it for execution
+	var rawTx *types.Transaction
+	if contract == nil {
+		rawTx = types.NewContractCreation(nonce, value, gasLimit, gasPrice, input)
+	} else {
+		rawTx = types.NewTransaction(nonce, c.address, value, gasLimit, gasPrice, input)
+	}
+	if opts.Signer == nil {
+		return nil, errors.New("no signer to authorize the transaction with")
+	}
+
+	ChainID := big.NewInt(int64(chainId)) //TODO
+
+	// signedTx, err := opts.Signer(types.NewCep1Signer(configs.ChainConfigInfo().ChainID), opts.From, rawTx)
+	signedTx, err := opts.Signer(types.NewCep1Signer(ChainID), opts.From, rawTx)
+
+	if err != nil {
+		return nil, err
+	}
+	if err := c.backend.SendTransaction(ensureContext(opts.Context), signedTx); err != nil {
+		return nil, err
+	}
+	return signedTx, nil
+}
+
+// ensureContext is a helper method to ensure a context is not nil, even if the
+// user specified it as such.
+func ensureContext(ctx context.Context) context.Context {
+	if ctx == nil {
+		return context.TODO()
+	}
+	return ctx
 }

@@ -33,7 +33,7 @@ func TestFilterEvents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	instance, err := contract.NewContractWithProvider(file, address, provider)
+	instance, err := contract.NewContractWithProvider(file, address, provider, URL)
 	if err != nil {
 		t.Fatal(err)
 	}

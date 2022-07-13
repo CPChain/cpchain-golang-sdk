@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/CPChain/cpchain-golang-sdk/internal/fusion"
-	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/hexutil"
+	"github.com/CPChain/cpchain-golang-sdk/internal/fusion/common/hexutil"
 )
 
 func TestProvider(t *testing.T) {
