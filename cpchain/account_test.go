@@ -17,9 +17,12 @@ var (
 	endpoint     = "https://civilian.testnet.cpchain.io"
 	keystorePath = "../fixtures/keystore/UTC--2022-06-09T05-48-04.258507200Z--52c5323efb54b8a426e84e4b383b41dcb9f7e977"
 	targetAddr   = "0x4f5625efef254760301d2766c6cc98f05722963e"
-	chainId      = uint64(41)
-	password     = "test123456!"
-	cfpath       = "../fixtures/contract/helloworld.json"
+	// targetAddr     = "0x51DE5b722a716fce40095B26C5F3eFDEa701613B"
+	chainId  = uint64(41)
+	password = "test123456!"
+	cfpath   = "../fixtures/contract/helloworld.json"
+	// airdropaddress = "0x2D770FC4B2E8F24292B08cc5fB15E6a69Fc0356a"
+	airdropaddress = "0xf2b59f4AD88f12fB382A8bbFC12D934B5f1F4Aa1"
 )
 
 const (
@@ -100,7 +103,7 @@ func TestSignTx(t *testing.T) {
 
 	valueInCpc := new(big.Int).Mul(big.NewInt(value), big.NewInt(Cpc))
 
-	msg := cpcclient.CallMsg{From: fromAddr, To: &to, Value: valueInCpc, Data: nil}
+	msg := cpcclient.CallMsg{From: fromAddr, To: &to, GasPrice: gasPrice, Value: valueInCpc, Data: nil}
 
 	gasLimit, err := client.EstimateGas(context.Background(), msg)
 	if err != nil {

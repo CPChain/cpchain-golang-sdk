@@ -37,6 +37,17 @@ func GetNetWork(endpoint string) (Network, error) {
 	}
 }
 
+// get network according to the endpoint
+func GetNetWorkbyChainId(chainid uint) (Network, error) {
+	if chainid == Mainnet.ChainId {
+		return Mainnet, nil
+	} else if chainid == Testnet.ChainId {
+		return Testnet, nil
+	} else {
+		return Network{}, errors.New("chainid is error")
+	}
+}
+
 func NewCPChain(network Network) (CPChain, error) {
 	provider, err := fusion.NewHttpProvider(network.JsonRpcUrl)
 	if err != nil {
@@ -206,6 +217,7 @@ func (c *cpchain) ReceiptByTx(signedTx *types.Transaction) (*types.Receipt, erro
 		return &types.Receipt{}, err
 	}
 	receipt, err := bind.WaitMined(context.Background(), backend, signedTx)
+	fmt.Println("Please wait 10 seconds...")
 	if err != nil {
 		return &types.Receipt{}, err
 	}
@@ -243,9 +255,13 @@ func (c *contractInternal) Events(eventName string, event interface{}, options .
 }
 
 // Call contract function
-func (c *contractInternal) Call(w Wallet, chainId uint, method string, params ...string) (*types.Transaction, error) {
+func (c *contractInternal) Call(w Wallet, chainId uint, method string, value int64, params ...string) (*types.Transaction, error) {
 	key := w.Key()
-	backend, err := cpcclient.Dial(Testnet.JsonRpcUrl) //TODO !!!!
+	network, err := GetNetWorkbyChainId(chainId)
+	if err != nil {
+		return nil, err
+	}
+	backend, err := cpcclient.Dial(network.JsonRpcUrl)
 
 	if err != nil {
 		return nil, err
@@ -257,6 +273,7 @@ func (c *contractInternal) Call(w Wallet, chainId uint, method string, params ..
 	}
 
 	auth := contract.NewTransactor(key.PrivateKey, new(big.Int).SetUint64(nonce))
+	auth.Value = new(big.Int).Mul(big.NewInt(value), big.NewInt(Cpc))
 
 	tx, err := c.contractIns.Transact(auth, chainId, method, params...)
 	if err != nil {

@@ -71,8 +71,9 @@ func (w *WalletInstance) Transfer(targetAddr string, value int64) (*types.Transa
 	msg := cpcclient.CallMsg{From: fromAddr, To: &to, Value: valueInCpc, Data: nil} //TODO
 
 	gasLimit, err := w.backend.EstimateGas(context.Background(), msg)
+
 	if err != nil {
-		slog.Fatal("Get gaslimit failed: %v", err)
+		slog.Fatal("Estimate gaslimit failed", "err", err)
 		return nil, err
 	}
 
@@ -82,49 +83,18 @@ func (w *WalletInstance) Transfer(targetAddr string, value int64) (*types.Transa
 
 	signedTx, err := w.SignTx(tx, chainID)
 	if err != nil {
-		slog.Fatal("Sign tx failed: %v", err)
+		slog.Fatal("Sign tx failed", "err", err)
 		return nil, err
 	}
 
 	err = w.backend.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		slog.Fatal("Send transaction failed: %v", err)
+		slog.Fatal("Send transaction failed", "err", err)
 		return nil, err
 	}
 
 	return signedTx, nil
 }
-
-// func (w *WalletInstance) DeployContractByFile(path string, password string) (common.Address, *types.Transaction, error) {
-// 	abi, bin, err := ReadContract(path)
-// 	if err != nil {
-// 		slog.Fatal(err)
-// 	}
-// 	return w.DeployContract(abi, bin, password)
-// }
-
-// func (w *WalletInstance) DeployContract(abi string, bin string, password string) (common.Address, *types.Transaction, error) {
-// 	Key, err := w.GetKey(password)
-// 	if err != nil {
-// 		slog.Fatal(err)
-// 		return common.Address{}, nil, nil
-// 	}
-
-// 	nonce, err := w.backend.PendingNonceAt(context.Background(), w.Addr())
-// 	if err != nil {
-// 		slog.Fatal(err)
-// 		return common.Address{}, nil, nil
-// 	}
-
-// 	auth := contract.NewTransactor(Key.PrivateKey, new(big.Int).SetUint64(nonce))
-
-// 	// address, tx, contract, err := contract.DeployContract(abi, auth, common.FromHex(bin), w.backend, w.network.ChainId)
-// 	address, tx, _, err := contract.DeployContract(abi, auth, common.FromHex(bin), w.backend, w.network.ChainId)
-// 	if err != nil {
-// 		return common.Address{}, nil, nil
-// 	}
-// 	return address, tx, nil
-// }
 
 func (w *WalletInstance) NewTransactor(password string) *bind.TransactOpts {
 	Key := w.key
