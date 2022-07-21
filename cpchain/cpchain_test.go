@@ -86,6 +86,7 @@ func TestEvents(t *testing.T) {
 	}
 }
 
+// 测试创建新钱包地址
 func TestCreateAccount(t *testing.T) {
 	password := "123456"
 	client, err := cpchain.NewCPChain(cpchain.Testnet)
@@ -118,6 +119,7 @@ const Abi = "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"const
 
 const Bin = `0x6080604052348015600f57600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550603f80605d6000396000f3fe6080604052600080fdfea2646970667358221220cc46356d887799b33b3ca82fcf610da45d06ecf8fa0e763740abfbd51f6898ff64736f6c634300080a0033`
 
+// 测试从文件中读取contract abi 和bin
 func TestReadContract(t *testing.T) {
 	abi, bin, err := cpchain.ReadContract(cfpath)
 	t.Log(abi)
@@ -133,6 +135,7 @@ func TestReadContract(t *testing.T) {
 	}
 }
 
+// 测试合约部署
 func TestContractDeploy(t *testing.T) {
 	abi, bin, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
 	if err != nil {
@@ -165,6 +168,7 @@ var (
 	Address, _ = abi.NewType("address")
 )
 
+// 测试call 合约的 function，会发送交易
 func TestContractTransact(t *testing.T) {
 	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
 	if err != nil {
@@ -182,7 +186,7 @@ func TestContractTransact(t *testing.T) {
 
 	// ABI,err := abi.JSON(strings.NewReader(Abi))
 
-	tx, err := contracthello.Call(wallet, 41, "helloToSomeOne", targetAddr)
+	tx, err := contracthello.Call(wallet, 41, "helloToSomeOne", int64(0), targetAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,7 +204,7 @@ func TestContractTransact(t *testing.T) {
 	}
 }
 
-// test convert params
+// 测试call 合约的 function，会发送交易(自动转换参数类型)
 func TestContractTransactConvert(t *testing.T) {
 	Abi, _, err := cpchain.ReadContract("../fixtures/contract/Hello.json")
 	if err != nil {
@@ -216,7 +220,7 @@ func TestContractTransactConvert(t *testing.T) {
 	}
 	contracthello := client.Contract([]byte(Abi), helloaddress)
 
-	tx, err := contracthello.Call(wallet, 41, "helloToSomeOne", targetAddr)
+	tx, err := contracthello.Call(wallet, 41, "helloToSomeOne", int64(0), targetAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,4 +301,153 @@ func TestReceiptByTx(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println(rep)
+}
+
+func Test1(t *testing.T) { //部署合约
+	abi, bin, err := cpchain.ReadContract("../fixtures/contract/AirDrop.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	address, tx, err := client.DeployContract(abi, bin, wallet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("address:%v", address.Hex())
+	t.Logf("Tx hash: %v", tx.Hash().Hex())
+}
+
+func Test2(t *testing.T) { //给合约充值
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/AirDrop.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	contractairdrop := client.Contract([]byte(Abi), airdropaddress)
+	// tx, err := wallet.Transfer("0x2D770FC4B2E8F24292B08cc5fB15E6a69Fc0356a", int64(1))
+	// t.Logf("Tx hash: %v", tx.Hash().Hex())
+
+	tx, err := contractairdrop.Call(wallet, 41, "recharge", int64(20))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("tx hash: %v", tx.Hash().Hex())
+	receipt, err := client.ReceiptByTx(tx)
+
+	if err != nil {
+		t.Fatalf("failed to waitMined tx:%v", err)
+	}
+	if receipt.Status == types.ReceiptStatusSuccessful {
+		t.Log("confirm transaction success")
+	} else {
+		t.Error("confirm transaction failed", "status", receipt.Status,
+			"receipt.TxHash", receipt.TxHash)
+	}
+}
+
+func Test3(t *testing.T) { //设置manager
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/AirDrop.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	contractairdrop := client.Contract([]byte(Abi), airdropaddress)
+	// tx, err := wallet.Transfer("0x2D770FC4B2E8F24292B08cc5fB15E6a69Fc0356a", int64(1))
+	// t.Logf("Tx hash: %v", tx.Hash().Hex())
+
+	tx, err := contractairdrop.Call(wallet, 41, "setManager", int64(0), "0xfd15c2932a60631222f7e6ffdde7bdab7237c2dc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("tx hash: %v", tx.Hash().Hex())
+	receipt, err := client.ReceiptByTx(tx)
+
+	if err != nil {
+		t.Fatalf("failed to waitMined tx:%v", err)
+	}
+	if receipt.Status == types.ReceiptStatusSuccessful {
+		t.Log("confirm transaction success")
+	} else {
+		t.Error("confirm transaction failed", "status", receipt.Status,
+			"receipt.TxHash", receipt.TxHash)
+	}
+}
+
+func Test4(t *testing.T) { //查看manager
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/AirDrop.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	contractairdrop := client.Contract([]byte(Abi), airdropaddress)
+
+	tx, err := contractairdrop.View("isManager", "0xfd15c2932a60631222f7e6ffdde7bdab7237c2dc")
+	fmt.Println(tx)
+}
+
+func Test5(t *testing.T) { //调用空投
+	client, err := cpchain.NewCPChain(cpchain.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wallet, err := client.LoadWallet(keystorePath, password)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Abi, _, err := cpchain.ReadContract("../fixtures/contract/AirDrop.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	contractairdrop := client.Contract([]byte(Abi), airdropaddress)
+	// tx, err := wallet.Transfer("0x2D770FC4B2E8F24292B08cc5fB15E6a69Fc0356a", int64(1))
+	// t.Logf("Tx hash: %v", tx.Hash().Hex())
+
+	tx, err := contractairdrop.Call(wallet, 41, "provideAirDrop", int64(0), "0xfd15c2932a60631222f7e6ffdde7bdab7237c2dc", "0x4f5625efef254760301d2766c6cc98f05722963e")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("tx hash: %v", tx.Hash().Hex())
+	receipt, err := client.ReceiptByTx(tx)
+
+	if err != nil {
+		t.Fatalf("failed to waitMined tx:%v", err)
+	}
+	if receipt.Status == types.ReceiptStatusSuccessful {
+		t.Log("confirm transaction success")
+	} else {
+		t.Error("confirm transaction failed", "status", receipt.Status,
+			"receipt.TxHash", receipt.TxHash)
+	}
 }

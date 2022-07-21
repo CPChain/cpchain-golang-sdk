@@ -42,7 +42,7 @@ type Contract interface {
 	Events(eventName string, event interface{}, options ...WithEventsOptionsOption) ([]*contract.Event, error)
 
 	// Call function, need to send transation
-	Call(w Wallet, chainId uint, method string, params ...string) (*types.Transaction, error)
+	Call(w Wallet, chainId uint, method string, value int64, params ...string) (*types.Transaction, error)
 
 	// View
 	View(method string, params ...string) (interface{}, error)

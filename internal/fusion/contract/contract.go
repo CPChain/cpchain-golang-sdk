@@ -210,7 +210,7 @@ func (c *contract) ConvertParmasType(method string, params ...string) ([]interfa
 	var convertedParams []interface{}
 	if err := c.abi.Methods[method].Inputs.ForEach(func(i int, inputs abi.Argument) error {
 		if inputs.Type.String() == "address" {
-			convertedParams = append(convertedParams, common.HexToAddress(params[0]))
+			convertedParams = append(convertedParams, common.HexToAddress(params[i]))
 		} else if inputs.Type.String() == "uint256" {
 			paramsInt64, err := strconv.ParseInt(params[i], 10, 64)
 			if err != nil {

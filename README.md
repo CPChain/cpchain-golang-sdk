@@ -94,5 +94,5 @@ go get github.com/CPChain/cpchain-golang-sdk/cpchain
     ```
 * View function of contract
     ```bash
-    go run cmd/contract/contract.go call -endpoint https://civilian.testnet.cpchain.io -contractfile ./fixtures/contract/helloworld.json -contractaddr 0xfD44A7aEFaDfa872Ade30EBE152Fc37E6977fe70 -function hellotime
+    go run cmd/contract/contract.g view -endpoint https://civilian.testnet.cpchain.io -contractfile ./fixtures/contract/helloworld.json -contractaddr 0xfD44A7aEFaDfa872Ade30EBE152Fc37E6977fe70 -function hellotime
     ```
