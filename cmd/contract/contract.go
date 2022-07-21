@@ -136,6 +136,11 @@ func main() {
 					Usage: "function of contract",
 					Value: "",
 				},
+				cli.IntFlag{
+					Name:  "value",
+					Usage: "Value in cpc",
+					Value: 0,
+				},
 				cli.StringSliceFlag{
 					Name:  "params, p",
 					Usage: "params of contract function",
@@ -148,6 +153,7 @@ func main() {
 				contractFilePath := c.String("contractfile")
 				contractAddr := c.String("contractaddr")
 				method := c.String("function")
+				value := c.Int64("value")
 				params := c.StringSlice("params")
 
 				if params != nil {
@@ -184,7 +190,7 @@ func main() {
 				}
 				abi, _, err := cpchain.ReadContract(cfpath)
 				fmt.Println(abi, contractAddr, wallet.Addr(), method, network.ChainId)
-				tx, err := clientOnTestnet.Contract([]byte(abi), contractAddr).Call(wallet, network.ChainId, method, params...)
+				tx, err := clientOnTestnet.Contract([]byte(abi), contractAddr).Call(wallet, network.ChainId, method, value, params...)
 				fmt.Println("Tx hash:", tx.Hash().Hex())
 				fmt.Println("Please wait 10 seconds")
 				receipt, err := clientOnTestnet.ReceiptByTx(tx)
